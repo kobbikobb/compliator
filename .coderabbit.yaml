@@ -1,0 +1,194 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# CodeRabbit configuration for a repository whose whole subject is verifiable
+# claims. Two things follow from that, and they shape everything below:
+#
+#   1. The review criteria are this repository's own rules. CONTRIBUTING.md and
+#      README.md are handed over as the coding guidelines, so a comment argues
+#      from "synthetic data only", "cite standards by identifier", "an empty
+#      population is an error" instead of generic taste.
+#   2. A bot does not approve. `request_changes_workflow` stays off: the
+#      documents say a named human approves, and an automated approval would
+#      read as one. Comments are advisory.
+#
+# Honest limitation: this repository is public with fewer than 10 stars, so
+# CodeRabbit does not start reviews by itself - no setting here changes that,
+# only the star count does. Until then a review begins with
+# `@coderabbitai review` on the pull request. The auto_review block is written
+# for the day that stops being true.
+language: en-US
+early_access: false
+
+reviews:
+  # assertive: this repository would rather be told a trust-boundary change is
+  # under-argued than have it merged quietly.
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_in_walkthrough: false
+  collapse_walkthrough: true
+  changed_files_summary: true
+  sequence_diagrams: false # most pull requests here are documents, not flows
+  poem: false
+  in_progress_fortune: false
+
+  auto_review:
+    enabled: true # inert below the 10-star threshold; correct once above it
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 3
+    drafts: false
+    ignore_title_keywords: ["WIP", "DO NOT MERGE", "[skip review]"]
+
+  path_filters:
+    - "!evidence/**" # generated records: gitignored locally, never reviewed
+
+  path_instructions:
+    - path: "src/compliator/packager.py"
+      instructions: >
+        The trust boundary, the one component an auditor is asked to trust.
+        Review it as production code: canonicalisation and hash coverage of
+        every emitted file, the raw payload binding in evidence.json, the rule
+        that LATEST.json moves only on success, and the absence of any
+        try/except that could turn a failure into an empty record. A change here
+        needs reasoning about hashing, not just passing tests.
+    - path: "src/compliator/**"
+      instructions: >
+        Plugins fetch and normalise facts; they never judge. All assertion logic
+        belongs in evaluate.py, driven by declarative YAML. An empty population
+        is an error, never a vacuous pass. Failures are loud (exit code 2) and
+        write no record. Keep the CLI importable from src/ with no packaging.
+    - path: "config/**"
+      instructions: >
+        Controls are declarative: metadata plus checks, no logic in YAML. Every
+        control names a source that exists in sources.yaml and uses only the
+        documented operators (population: all_equal, none_equal, exists,
+        date_within_days, min_gte, count_gte; scalar: equals, gte, exists,
+        count_gte). Reject framework mappings presented as authoritative; they
+        are illustrative placeholders cited by identifier only.
+    - path: "isms/**"
+      instructions: >
+        Documents, not code. Outline the rules they must obey: synthetic data
+        only, with reserved domains such as example.invalid; standards cited by
+        identifier (A.8.32, CC8.1) with our own one-line summary, never
+        copyrighted standard text; stable ids that cannot be renamed without
+        breaking the trace from policy to evidence; an owner and a review date
+        on every document; `status:` honest, where draft means nobody approved
+        it. Flag anything that reads as real company data, a real person, or a
+        credential.
+    - path: "tests/**"
+      instructions: >
+        Standard-library unittest, run with PYTHONPATH=src. Tests should assert
+        behaviour the project promises - empty-population refusal, fail-loud
+        errors, determinism apart from the timestamp, tamper detection,
+        schema pinning - rather than restating the implementation. Watch for
+        constructs that only behave the same on recent Python: the suite runs on
+        3.9, 3.13 and 3.14.
+    - path: ".github/workflows/**"
+      instructions: >
+        Workflows run the same commands a person runs: make test, then make demo
+        (collect and verify). Keep permissions minimal (contents: read) and pin
+        action tags deliberately.
+    - path: "*.md"
+      instructions: >
+        Match the register of the documents: precise, unhyped, no marketing
+        adjectives, and honest about limitations. A claim about what the
+        software does must be true of the code in this same diff.
+
+  pre_merge_checks:
+    title:
+      mode: warning
+      requirements: >
+        Concise and descriptive, describing the change rather than the process.
+        Preferred style is a short imperative summary line.
+    description:
+      mode: warning
+    docstrings:
+      mode: "off" # quoted: YAML 1.1 parsers read bare off as boolean false
+    custom_checks:
+      - mode: warning
+        name: Documents carry owner and status
+        instructions: >
+          Every added or modified file under isms/ that is a document (Markdown
+          with front matter) must declare an `owner:` and a `status:` field, and
+          a review or approval date where the file's own template asks for one.
+          Fail if a document is added without them.
+
+  tools:
+    # Kept: the tooling this repository can actually trip.
+    ruff: { enabled: true }
+    pylint: { enabled: false } # ruff covers it
+    flake8: { enabled: false } # ruff covers it
+    markdownlint: { enabled: true }
+    yamllint: { enabled: true }
+    actionlint: { enabled: true }
+    zizmor: { enabled: true }
+    checkmake: { enabled: true } # the Makefile is the documented entry point
+    github-checks: { enabled: true }
+    gitleaks: { enabled: true }
+    trufflehog: { enabled: true }
+    osvScanner: { enabled: true }
+    semgrep: { enabled: true }
+    languagetool: { enabled: false } # prose here is deliberate; not a style check
+
+    # Off: no code in these languages, or nothing for the tool to read.
+    ast-grep: { enabled: true }
+    biome: { enabled: false }
+    eslint: { enabled: false }
+    oxc: { enabled: false }
+    checkov: { enabled: false }
+    hadolint: { enabled: false }
+    tflint: { enabled: false }
+    sqlfluff: { enabled: false }
+    squawk: { enabled: false }
+    stylelint: { enabled: false }
+    htmlhint: { enabled: false }
+    luacheck: { enabled: false }
+    shellcheck: { enabled: false }
+    psscriptanalyzer: { enabled: false }
+    phpstan: { enabled: false }
+    phpcs: { enabled: false }
+    phpmd: { enabled: false }
+    rubocop: { enabled: false }
+    swiftlint: { enabled: false }
+    detekt: { enabled: false }
+    clippy: { enabled: false }
+    cppcheck: { enabled: false }
+    golangci-lint: { enabled: false }
+    pmd: { enabled: false }
+    fbinfer: { enabled: false }
+    clang: { enabled: false }
+    brakeman: { enabled: false }
+    regal: { enabled: false }
+    buf: { enabled: false }
+    oasdiff: { enabled: false }
+    prismaLint: { enabled: false }
+    dotenvLint: { enabled: false }
+    fortitudeLint: { enabled: false }
+    blinter: { enabled: false }
+    circleci: { enabled: false }
+    shopifyThemeCheck: { enabled: false }
+    emberTemplateLint: { enabled: false }
+    smartyLint: { enabled: false }
+    verilator: { enabled: false }
+    reactDoctor: { enabled: false }
+    skillspector: { enabled: false }
+    presidio: { enabled: false }
+
+  finishing_touches:
+    # Tests and docstrings here are written deliberately, in the project's
+    # voice. Generated ones would have to be rewritten anyway.
+    docstrings: { enabled: false }
+    unit_tests: { enabled: false }
+
+  # No tool configuration: the repository has no linter configs to respect, and
+  # adding one for a review bot would be the tail wagging the dog.
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "CONTRIBUTING.md"
+      - "README.md"
+      - "ENGINE.md"
+  learnings:
+    scope: local # public repository: keep anything learned inside this repo

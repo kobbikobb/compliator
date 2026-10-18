@@ -120,5 +120,8 @@ relevant milestone needs them:
   and have not been checked against SOC 2 TSC or ISO/IEC 27001:2022 Annex A.
 - Records are only as trustworthy as the manifest they ship with; there is no
   external notarisation, and `LATEST.json` is trusted for staleness.
+- **Automated review is manual.** The repository sits below CodeRabbit's ten-star
+  threshold, so the review bot starts only when someone asks it to
+  (`@coderabbitai review`). No configuration changes that; popularity does.
 - No retention, immutability, access control, scheduling, or remediation
   workflow — by design, for now.
