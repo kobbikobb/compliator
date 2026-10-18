@@ -17,6 +17,8 @@ test:
 list:
 	PYTHONPATH=$(PYTHONPATH) python3 -m compliator list
 
+# remove generated records but keep the tracked .gitkeep: `rm -rf evidence`
+# would delete a version-controlled file along with the output
 clean:
-	rm -rf evidence
+	rm -rf evidence/*
 	mkdir -p evidence
