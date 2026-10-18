@@ -1,0 +1,31 @@
+control:
+  id: soc2-cc6.8
+  title: Secret scanning enabled on all repositories
+  statement: >
+    All repositories in the organization have secret scanning enabled so that
+    accidentally committed credentials are detected, with push protection
+    where available.
+  owner: platform-team@example.invalid
+  frequency: 1d
+  frameworks:
+    soc2: "CC6.8 - Prevention of malicious code (illustrative mapping)"
+    iso_27001: "A.8.28 - Secure coding (illustrative mapping)"
+
+source: github_org
+
+checks:
+  - description: Secret scanning is enabled in every repository
+    population:
+      path: repos
+    must:
+      path: secret_scanning.enabled
+      op: all_equal
+      value: true
+
+  - description: Push protection is enabled in every repository
+    population:
+      path: repos
+    must:
+      path: secret_scanning.push_protection
+      op: all_equal
+      value: true

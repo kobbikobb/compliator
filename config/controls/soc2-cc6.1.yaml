@@ -1,0 +1,30 @@
+control:
+  id: soc2-cc6.1
+  title: Privileged cloud users use multi-factor authentication
+  statement: >
+    Every user flagged as an administrator in the cloud account has MFA
+    enabled on their account.
+  owner: platform-team@example.invalid
+  frequency: 1d
+  frameworks:
+    soc2: "CC6.1 - Logical access security (illustrative mapping)"
+    iso_27001: "A.8.5 - Secure authentication (illustrative mapping)"
+
+source: cloud_acct
+
+checks:
+  - description: All administrator accounts have MFA enabled
+    population:
+      path: iam_users
+      where:
+        admin: true
+    must:
+      path: mfa_enabled
+      op: all_equal
+      value: true
+
+  - description: Administrator population is non-empty (guards against silent vacuous pass)
+    must:
+      path: iam_users
+      op: count_gte
+      value: 1

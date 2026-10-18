@@ -1,0 +1,35 @@
+# MANUAL INPUT - stands in for a vendor review form completed by a human
+# (Security/Procurement). One entry per vendor reviewed. The reviewer signs
+# off the review date and decision; this file is then collected as evidence.
+#
+# Review cadence: tier-1 vendors reviewed at least every 365 days.
+as_of: 2026-10-01
+reviews:
+  - vendor: Stripe
+    risk_tier: tier-1
+    reviewer: grace@example.invalid
+    review_type: annual_security_review
+    last_review: 2026-06-01
+    decision: continue
+    evidence_link: https://intranet.example.invalid/vendor-reviews/stripe-2026
+  - vendor: Amazon Web Services
+    risk_tier: tier-1
+    reviewer: grace@example.invalid
+    review_type: annual_security_review
+    last_review: 2026-05-20
+    decision: continue
+    evidence_link: https://intranet.example.invalid/vendor-reviews/aws-2026
+  - vendor: Postmark
+    risk_tier: tier-2
+    reviewer: radia@example.invalid
+    review_type: annual_security_review
+    last_review: 2025-10-30
+    decision: continue
+    evidence_link: https://intranet.example.invalid/vendor-reviews/postmark-2025
+  - vendor: Figma
+    risk_tier: tier-3
+    reviewer: alan@example.invalid
+    review_type: light_review
+    last_review: 2025-08-11
+    decision: continue
+    evidence_link: https://intranet.example.invalid/vendor-reviews/figma-2025

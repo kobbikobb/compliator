@@ -1,0 +1,33 @@
+control:
+  id: soc2-cc7.2
+  title: Cloud audit logging enabled with adequate retention
+  statement: >
+    The cloud audit trail (mock CloudTrail equivalent) is enabled in all
+    regions, supports log file integrity validation, and audit logs are
+    retained for at least 365 days.
+  owner: platform-team@example.invalid
+  frequency: 1d
+  frameworks:
+    soc2: "CC7.2 - System monitoring (illustrative mapping)"
+    iso_27001: "A.8.15 - Logging (illustrative mapping)"
+
+source: cloud_acct
+
+checks:
+  - description: Audit trail is enabled and covers all regions
+    must:
+      path: logging.cloudtrail.enabled
+      op: equals
+      value: true
+
+  - description: Log file integrity validation is enabled
+    must:
+      path: logging.cloudtrail.log_file_validation
+      op: equals
+      value: true
+
+  - description: Audit log retention is at least 365 days
+    must:
+      path: logging.cloudtrail.retention_days
+      op: gte
+      value: 365

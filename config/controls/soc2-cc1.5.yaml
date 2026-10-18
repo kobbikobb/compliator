@@ -1,0 +1,25 @@
+control:
+  id: soc2-cc1.5
+  title: Current employees have acknowledged the acceptable use policy
+  statement: >
+    Every current employee has a signed acknowledgment of the acceptable use
+    policy on file, signed within the last 365 days. Source is a
+    human-maintained form (manual input), not a system export.
+  owner: people-ops@example.invalid
+  frequency: 30d
+  frameworks:
+    soc2: "CC1.5 - Accountability (illustrative mapping)"
+    iso_27001: "A.6.8 - Information security awareness, education and training (illustrative mapping)"
+
+source: hr_acknowledgments
+
+checks:
+  - description: Every current employee signed the AUP within the last 365 days
+    population:
+      path: employees
+      where:
+        status: current
+    must:
+      path: signed_at
+      op: date_within_days
+      value: 365

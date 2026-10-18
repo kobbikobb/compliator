@@ -1,0 +1,35 @@
+control:
+  id: soc2-cc9.2
+  title: Tier-1 vendors reviewed within the last 12 months
+  statement: >
+    Every vendor classified as tier-1 (highest risk / sensitive data access)
+    has a documented security review completed within the last 365 days,
+    signed off by a named reviewer. Source is a human-maintained review form
+    (manual input).
+  owner: security@example.invalid
+  frequency: 90d
+  frameworks:
+    soc2: "CC9.2 - Vendor and partner risk management (illustrative mapping)"
+    iso_27001: "A.5.19 - Supplier agreements (illustrative mapping)"
+
+source: vendor_reviews
+
+checks:
+  - description: All tier-1 vendors reviewed within the last 365 days
+    population:
+      path: reviews
+      where:
+        risk_tier: tier-1
+    must:
+      path: last_review
+      op: date_within_days
+      value: 365
+
+  - description: Every review records a named reviewer
+    population:
+      path: reviews
+      where:
+        risk_tier: tier-1
+    must:
+      path: reviewer
+      op: exists

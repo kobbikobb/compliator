@@ -1,0 +1,56 @@
+control:
+  id: soc2-cc8.1
+  title: Production deployments require pull request review
+  statement: >
+    All changes deployed to production are merged through a pull request that
+    received at least one approval before merge, and branch protection on
+    production repositories enforces this for everyone, including
+    administrators.
+  owner: platform-team@example.invalid
+  frequency: 1d
+  frameworks:
+    soc2: "CC8.1 - Change management (illustrative mapping)"
+    iso_27001: "A.8.32 - Change management (illustrative mapping)"
+
+source: github_org
+
+checks:
+  - description: Every production repository requires at least one PR approval on its default branch
+    population:
+      path: repos
+      where:
+        environment: production
+    must:
+      path: branch_protection.main.required_pull_request_reviews.enabled
+      op: all_equal
+      value: true
+
+  - description: Branch protection cannot be bypassed by administrators in production repositories
+    population:
+      path: repos
+      where:
+        environment: production
+    must:
+      path: branch_protection.main.enforce_admins
+      op: all_equal
+      value: true
+
+  - description: Every recent production deployment originated from a merged pull request
+    population:
+      path: workflow_runs
+      where:
+        deploy_target: production
+    must:
+      path: pr_merged
+      op: all_equal
+      value: true
+
+  - description: Every recent production deployment had at least one approval before merge
+    population:
+      path: workflow_runs
+      where:
+        deploy_target: production
+    must:
+      path: pr_approvals
+      op: min_gte
+      value: 1

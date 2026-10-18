@@ -1,0 +1,72 @@
+# MANUAL INPUT - stands in for a form filled in by a human (People Ops).
+# One entry per CURRENT employee. This file is evidence of a human attestation,
+# not a system export: a person reviews and updates it, then it enters the
+# collection pipeline like any other source.
+#
+# as_of = the date the attestation pass was completed.
+as_of: 2026-10-01
+acknowledgment:
+  policy: acceptable-use-policy
+  policy_version: "3.1"
+  method: signed_during_onboarding
+employees:
+  - name: Ada Lovelace
+    email: ada@example.invalid
+    status: current
+    signed_at: 2026-03-12
+    signed_by: ada@example.invalid
+  - name: Grace Hopper
+    email: grace@example.invalid
+    status: current
+    signed_at: 2026-03-14
+    signed_by: grace@example.invalid
+  - name: Linus Torvalds
+    email: linus@example.invalid
+    status: current
+    signed_at: 2025-11-08
+    signed_by: linus@example.invalid
+  - name: Barbara Liskov
+    email: barbara@example.invalid
+    status: current
+    signed_at: 2026-02-19
+    signed_by: barbara@example.invalid
+  - name: Kenneth Thompson
+    email: kenneth@example.invalid
+    status: current
+    signed_at: 2026-05-06
+    signed_by: kenneth@example.invalid
+  - name: Radia Perlman
+    email: radia@example.invalid
+    status: current
+    signed_at: 2025-11-04
+    signed_by: radia@example.invalid
+  - name: Vint Cerf
+    email: vint@example.invalid
+    status: current
+    signed_at: 2026-01-14
+    signed_by: vint@example.invalid
+  - name: Margaret Hamilton
+    email: margaret@example.invalid
+    status: current
+    signed_at: 2026-03-25
+    signed_by: margaret@example.invalid
+  - name: Alan Kay
+    email: alan@example.invalid
+    status: current
+    signed_at: 2025-12-02
+    signed_by: alan@example.invalid
+  - name: Guido van Rossum
+    email: guido@example.invalid
+    status: current
+    signed_at: 2026-08-19
+    signed_by: guido@example.invalid
+  - name: Frances Allen
+    email: frances@example.invalid
+    status: current
+    signed_at: 2026-02-03
+    signed_by: frances@example.invalid
+  - name: Jean Bartik
+    email: jean@example.invalid
+    status: current
+    signed_at: 2026-01-13
+    signed_by: jean@example.invalid

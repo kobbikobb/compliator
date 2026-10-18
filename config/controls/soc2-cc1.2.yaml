@@ -1,0 +1,25 @@
+control:
+  id: soc2-cc1.2
+  title: Terminated employees have documented exit dates
+  statement: >
+    Every employee whose status is "terminated" in the HR roster has a
+    recorded exit date, evidencing that offboarding was processed.
+  owner: people-ops@example.invalid
+  frequency: 30d
+  frameworks:
+    soc2: "CC1.2 - Recruitment and onboarding (illustrative mapping)"
+    iso_27001: "A.6.5 - Terms and conditions of employment (illustrative mapping)"
+
+source: hr_roster
+
+checks:
+  - description: Every terminated employee record has an exit date
+    population:
+      path: employees
+      where:
+        status: terminated
+    must:
+      path: exit_date
+      op: exists
+    # NOTE: the runner treats an EMPTY population as an error (fail loud),
+    # never as a vacuous pass. That is the completeness guard for this check.

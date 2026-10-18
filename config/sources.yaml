@@ -1,0 +1,39 @@
+# Named data sources. Each source maps to ONE thin plugin whose only job is
+# to pull raw facts from the (mock) system and hand them back. No control
+# logic lives here or in the plugin - control logic lives in config/controls/.
+sources:
+  github_org:
+    plugin: mock_github
+    description: GitHub organization - repositories, branch protection, workflow runs
+    options:
+      fixture: fixtures/github_org.json
+
+  cloud_acct:
+    plugin: mock_cloud
+    description: Cloud account - logging configuration and IAM user facts
+    options:
+      fixture: fixtures/cloud_config.json
+
+  hr_roster:
+    plugin: hr_roster
+    description: HR roster - employee start/end dates (CSV standing in for HR system export)
+    options:
+      fixture: fixtures/hr_roster.csv
+
+  vendor_inventory:
+    plugin: vendor_inventory
+    description: Vendor inventory with risk tiers
+    options:
+      fixture: fixtures/vendor_inventory.yaml
+
+  hr_acknowledgments:
+    plugin: manual_yaml
+    description: Human-filled policy acknowledgment form (manual input)
+    options:
+      path: manual/hr-acknowledgments.yaml
+
+  vendor_reviews:
+    plugin: manual_yaml
+    description: Human-filled vendor review sign-off form (manual input)
+    options:
+      path: manual/vendor-reviews.yaml

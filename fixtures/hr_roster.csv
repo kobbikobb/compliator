@@ -1,0 +1,16 @@
+name,email,role,status,start_date,exit_date
+Ada Lovelace,ada@example.invalid,engineering,current,2023-04-03,
+Grace Hopper,grace@example.invalid,platform,current,2023-06-12,
+Linus Torvalds,linus@example.invalid,engineering,current,2024-01-08,
+Barbara Liskov,barbara@example.invalid,finance,current,2024-02-19,
+Kenneth Thompson,kenneth@example.invalid,engineering,current,2024-05-06,
+Radia Perlman,radia@example.invalid,support,current,2024-09-02,
+Vint Cerf,vint@example.invalid,sales,current,2025-01-13,
+Margaret Hamilton,margaret@example.invalid,engineering,current,2025-03-24,
+Alan Kay,alan@example.invalid,design,current,2025-06-02,
+Guido van Rossum,guido@example.invalid,engineering,current,2025-08-18,
+Frances Allen,frances@example.invalid,support,current,2025-11-03,
+Jean Bartik,jean@example.invalid,marketing,current,2026-01-12,
+Dennis Ritchie,dennis@example.invalid,engineering,terminated,2023-05-15,2026-07-31
+Jude Milhon,jude@example.invalid,marketing,terminated,2024-03-11,2026-04-17
+Rob Pike,rob@example.invalid,engineering,current,2026-11-02,

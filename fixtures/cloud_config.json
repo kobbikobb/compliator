@@ -1,0 +1,58 @@
+{
+  "account_id": "0000-1111-2222",
+  "account_alias": "acme-prod",
+  "provider": "mockcloud",
+  "fetched_fixture_note": "MOCK DATA - stands in for cloud provider API responses (e.g. AWS CloudTrail/IAM GetAccountSummary). No real account.",
+  "logging": {
+    "cloudtrail": {
+      "enabled": true,
+      "multi_region": true,
+      "log_file_validation": true,
+      "retention_days": 400,
+      "kms_key_id": "mock/acme-prod-cloudtrail",
+      "is_organization_trail": false
+    },
+    "monitoring": {
+      "alerting_enabled": true,
+      "retention_days": 400
+    }
+  },
+  "iam_users": [
+    {
+      "username": "ada.admin",
+      "role": "engineering",
+      "admin": true,
+      "mfa_enabled": true,
+      "password_last_changed": "2026-05-10",
+      "access_keys": [
+        {"access_key_id": "SYNTHETIC-KEY-0001", "active": true, "last_rotated": "2026-08-02"}
+      ]
+    },
+    {
+      "username": "grace.admin",
+      "role": "platform",
+      "admin": true,
+      "mfa_enabled": true,
+      "password_last_changed": "2026-07-21",
+      "access_keys": []
+    },
+    {
+      "username": "linus.dev",
+      "role": "engineering",
+      "admin": false,
+      "mfa_enabled": true,
+      "password_last_changed": "2026-09-01",
+      "access_keys": [
+        {"access_key_id": "SYNTHETIC-KEY-0002", "active": true, "last_rotated": "2026-09-14"}
+      ]
+    },
+    {
+      "username": "barbara.finance",
+      "role": "finance",
+      "admin": false,
+      "mfa_enabled": true,
+      "password_last_changed": "2026-02-18",
+      "access_keys": []
+    }
+  ]
+}
