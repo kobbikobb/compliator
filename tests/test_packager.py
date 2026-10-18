@@ -29,7 +29,10 @@ class TestPackagerAndVerify(unittest.TestCase):
             evidence_root=self.tmp, out=io.StringIO(), err=io.StringIO(),
         )
         self.assertEqual(code, 0)
-        record = next((self.tmp / "soc2-cc8.1").glob("*/"))
+        # iterdir + is_dir, not glob("*/"): before Python 3.13 pathlib ignores a
+        # trailing slash, so glob("*/") also returns LATEST.json
+        control_dir = self.tmp / "soc2-cc8.1"
+        record = next(p for p in sorted(control_dir.iterdir()) if p.is_dir())
         return record
 
     def test_record_contains_raw_copy_and_provenance(self):
@@ -102,6 +105,15 @@ class TestPackagerAndVerify(unittest.TestCase):
         )
         self.assertEqual(latest.read_text(), before)
 
+
+    def test_verify_all_walks_records_and_ignores_the_latest_pointer(self):
+        from compliator.verify import verify_all
+
+        self._collect_one()
+        reports = verify_all(self.tmp)
+        self.assertEqual(len(reports), 1)
+        self.assertTrue(reports[0]["ok"])
+        self.assertEqual(reports[0]["control_id"], "soc2-cc8.1")
 
     def test_manifest_carries_schema_and_no_command_string(self):
         """The manifest pins a format; it stores no checkout-specific command."""

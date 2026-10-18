@@ -30,6 +30,10 @@ PYTHONPATH=src python3 -m compliator verify evidence
 The engine is imported from `src/`, not installed, so `PYTHONPATH=src` is the
 whole setup. `make demo`, `make test`, `make clean` wrap the same commands.
 
+Every push to `main` and every pull request runs those commands in GitHub Actions
+across Python 3.9, 3.13 and 3.14 (`.github/workflows/ci.yml`) — unit tests, then
+the end-to-end collect-and-verify. Nothing is merged on local green alone.
+
 ## What a change should include
 
 1. A brief explanation of the problem, in the pull request description.

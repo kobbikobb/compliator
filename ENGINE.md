@@ -10,7 +10,7 @@ cloud account, no database.
 
 | Need | Why | Notes |
 | --- | --- | --- |
-| Python 3.9+ | runs the engine | developed on 3.14; stdlib only, except… |
+| Python 3.9+ | runs the engine | 3.9, 3.13 and 3.14 run the suite in CI; stdlib only, except… |
 | PyYAML ≥ 6.0 | parses control/source config | `python3 -m pip install -r requirements.txt` |
 | git | evidence and ISMS documents are reviewed as diffs | — |
 | `gh` CLI | optional | only for creating PRs / talking to GitHub later |
