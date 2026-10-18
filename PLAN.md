@@ -29,6 +29,12 @@ copy — OSCAL (data model and vocabulary), CISO Assistant, Probo, Comp AI, and
 Openlane. Outcome: an agreed vision plus a list of things we deliberately do not
 do.
 
+Review alongside it the framework model drafted in
+[`isms/frameworks/README.md`](isms/frameworks/README.md): framework requirements
+versus our controls, the many-to-many mapping, and why the free-text framework
+references currently in `config/controls/*.yaml` should become validated
+identifiers. No code for it in this milestone.
+
 ## Milestone 2 — Fictional company and minimal repository shape
 
 Describe a fictional one-person software startup: what it builds, which systems
@@ -43,7 +49,10 @@ separation actually helps. Outcome: a directory tree a newcomer can navigate.
 
 Write a few policies that are relevant and actionable, identify and assess a few
 risks, define corresponding controls, document applicability, owners and
-assumptions, and capture explicit human review decisions.
+assumptions, and capture explicit human review decisions. Applicability means a
+statement of applicability: which framework controls apply, why, and which of our
+controls covers each one — written from the risk treatment decisions, before the
+bulk of the topic policies.
 
 Explicitly **not** in scope: bulk-generating 93 Annex A controls, or claiming
 audit readiness from paper artifacts. Outcome: a coherent, tiny ISMS with visible
