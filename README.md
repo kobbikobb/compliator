@@ -71,9 +71,95 @@ the difference is inspectability and where it lives. See
 [`VISION.md`](VISION.md) for the intended direction, including the parts that are
 explicitly *not* built.
 
-## Quickstart
+## Prerequisites
 
-Requires Python 3.9+ and PyYAML.
+| Need | Why | Notes |
+| --- | --- | --- |
+| Python 3.9+ | runs the engine | developed on 3.14; stdlib only, except… |
+| PyYAML ≥ 6.0 | parses control/source config | `python3 -m pip install -r requirements.txt` |
+| git | evidence and ISMS documents are reviewed as diffs | — |
+| `gh` CLI | optional | only for creating PRs / talking to GitHub later |
+
+Nothing else. Today there is **no network access, no credentials, no cloud
+account, and no database** — everything runs against the synthetic fixtures in
+`fixtures/` and `manual/`.
+
+When real sources arrive (Milestone 4 in [`PLAN.md`](PLAN.md)), they will need
+**read-only credentials**: a token scoped to *read* the facts being checked,
+never one that can change them. Those credentials live outside the repository
+(environment variables or a secret store) and are never committed — see
+[`SECURITY.md`](SECURITY.md).
+
+## Getting started from scratch
+
+```bash
+git clone https://github.com/kobbikobb/compliator.git
+cd compliator
+python3 -m pip install -r requirements.txt
+```
+
+Confirm it works before writing anything of your own:
+
+```bash
+python3 -m compliator list                 # the 7 example controls and their checks
+python3 -m compliator collect              # collect them all against synthetic fixtures
+python3 -m compliator verify evidence       # re-verify every record's hashes
+python3 -m unittest discover -s tests -v    # 42 tests
+```
+
+You should end with 7 passing controls, 7 verified records, and a green test
+suite. If that is not what you see, stop and fix it first — nothing below means
+anything if the engine does not run.
+
+Then, when you start on your own organization's documents, this is the order
+that works: **scope → policies → risks → controls → sources → evidence.** Each
+step gives the next one something to reference.
+
+## What to populate first
+
+The ISMS is a small set of human-readable documents plus structured config. Add
+them in this order.
+
+| # | Document | Where | Status |
+| --- | --- | --- | --- |
+| 1 | **Scope** — what the ISMS covers: organisation, systems, data, boundaries, exclusions | `docs/scope.md` | template ready |
+| 2 | **Policies** — the rules you commit to, one file each, with an owner and review cadence | `docs/policies/*.md` | template ready |
+| 3 | **Risks** — what could go wrong, how bad, how you treat it, who owns it | `docs/risks/*.md` | template ready |
+| 4 | **Controls** — the claims you make about how a risk is handled, each with declarative checks | `config/controls/*.yaml` | **works today** (7 examples) |
+| 5 | **Sources** — the systems of record your checks read facts from | `config/sources.yaml` | works today against fixtures only |
+| 6 | **Manual evidence** — human attestations (acknowledgments, sign-offs) | `manual/*.yaml` | works today |
+| 7 | **Evidence** — generated records that bind claims to observed facts | `evidence/` (gitignored) | works today |
+
+Conventions, templates, and worked-through instructions for 1–3 are in
+[`docs/README.md`](docs/README.md). 4–7 are the engine's own files and are
+documented in the sections below.
+
+### How the pieces reference each other
+
+```
+docs/scope.md          ← what is in scope
+docs/policies/*.md     ← a policy names the controls that implement it
+docs/risks/*.md        ← a risk names the controls that treat it
+        │
+        ▼
+config/controls/*.yaml ← the control: statement, owner, cadence, and its checks
+        │
+        ▼
+config/sources.yaml    ← which system of record each control reads from
+        │
+        ▼
+evidence/<control>/    ← the collected record: observed values + raw payload + hashes
+```
+
+The link is by **control id** (`soc2-cc8.1`): a policy or risk references the
+id, the control config uses it as its filename and `control.id`. That is what
+lets someone trace a claim in a policy down to the payload it was tested
+against.
+
+Start with one policy, one risk, one control. Three files that are honest are
+worth more than a full set nobody has read.
+
+## Running the engine
 
 ```bash
 python3 -m pip install -r requirements.txt
@@ -129,8 +215,10 @@ both are detected.
 
 - **Not an ISMS.** An ISMS is the organizational system of record — scope,
   policies, risks, controls, owners, reviews, exceptions, decisions. This
-  repository currently contains only the *verification engine*, one component
-  of that. The ISMS layer is Milestones 2–3 in [`PLAN.md`](PLAN.md).
+  repository contains the *verification engine* (which works), plus skeleton
+  guidance and templates for the ISMS documents in [`docs/`](docs/README.md)
+  (which are placeholders to be written, per Milestones 2–3 in
+  [`PLAN.md`](PLAN.md)). The templates are conventions, not content.
 - **Not a compliance platform.** No hosted service, no dashboard, no
   integrations.
 - **Not certification, and not evidence of compliance.** Nothing here is
@@ -146,6 +234,7 @@ both are detected.
 ## Layout
 
 ```
+docs/                        the ISMS documents (scope, policies, risks) - see docs/README.md
 config/sources.yaml          named sources, each mapping to one plugin
 config/controls/*.yaml       one file per control: metadata + declarative checks
 fixtures/                    synthetic GitHub org, cloud account, HR roster, vendors
