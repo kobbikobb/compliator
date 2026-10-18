@@ -103,5 +103,95 @@ class TestPackagerAndVerify(unittest.TestCase):
         self.assertEqual(latest.read_text(), before)
 
 
+    def test_manifest_carries_schema_and_no_command_string(self):
+        """The manifest pins a format; it stores no checkout-specific command."""
+        import json
+
+        record = self._collect_one()
+        manifest = json.loads((record / "MANIFEST.json").read_text())
+        self.assertEqual(manifest["schema"], "compliator/evidence-manifest/v1")
+        self.assertNotIn("verify_with", manifest)
+        for rel, digest in manifest["files"].items():
+            self.assertTrue((record / rel).is_file())
+            self.assertEqual(len(digest), 64)
+
+    def test_verify_passes_without_warnings_on_current_record(self):
+        from compliator import __version__
+
+        record = self._collect_one()
+        report = verify_record(record)
+        self.assertTrue(report["ok"])
+        self.assertEqual(report["engine_version"], __version__)
+        self.assertEqual(report["warnings"], [])
+
+    def _write_synthetic_record(self, *, evidence_schema, manifest_schema, engine_version="0.0.1-ancient"):
+        """A hand-built record with valid hashes, so schema pins are tested alone."""
+        from compliator.packager import canonical_json, sha256_file
+
+        record = self.tmp / "synthetic" / "c1"
+        (record / "raw").mkdir(parents=True)
+        raw_path = record / "raw" / "source.json"
+        raw_path.write_text(canonical_json({"resources": []}), encoding="utf-8")
+        evidence = {
+            "schema": evidence_schema,
+            "control": {"id": "synthetic-1"},
+            "collection": {"id": "c1", "engine_version": engine_version},
+            "source": {"raw_file": "raw/source.json", "raw_sha256": sha256_file(raw_path)},
+            "result": "pass",
+        }
+        evidence_path = record / "evidence.json"
+        evidence_path.write_text(canonical_json(evidence), encoding="utf-8")
+        manifest = {
+            "collection_id": "c1",
+            "control_id": "synthetic-1",
+            "files": {
+                "evidence.json": sha256_file(evidence_path),
+                "raw/source.json": sha256_file(raw_path),
+            },
+        }
+        if manifest_schema is not None:
+            manifest["schema"] = manifest_schema
+        (record / "MANIFEST.json").write_text(canonical_json(manifest), encoding="utf-8")
+        return record
+
+    def test_verify_rejects_unknown_evidence_schema(self):
+        record = self._write_synthetic_record(
+            evidence_schema="compliator/evidence-record/v9",
+            manifest_schema="compliator/evidence-manifest/v1",
+        )
+        with self.assertRaises(VerificationError) as ctx:
+            verify_record(record)
+        self.assertIn("schema", str(ctx.exception))
+
+    def test_verify_rejects_unknown_manifest_schema(self):
+        record = self._write_synthetic_record(
+            evidence_schema="compliator/evidence-record/v1",
+            manifest_schema="compliator/evidence-manifest/v9",
+        )
+        with self.assertRaises(VerificationError) as ctx:
+            verify_record(record)
+        self.assertIn("schema", str(ctx.exception))
+
+    def test_verify_rejects_manifest_without_schema(self):
+        record = self._write_synthetic_record(
+            evidence_schema="compliator/evidence-record/v1",
+            manifest_schema=None,
+        )
+        with self.assertRaises(VerificationError) as ctx:
+            verify_record(record)
+        self.assertIn("no schema", str(ctx.exception))
+
+    def test_verify_reports_engine_version_skew_without_failing(self):
+        record = self._write_synthetic_record(
+            evidence_schema="compliator/evidence-record/v1",
+            manifest_schema="compliator/evidence-manifest/v1",
+            engine_version="0.0.1-ancient",
+        )
+        report = verify_record(record)
+        self.assertTrue(report["ok"])
+        self.assertEqual(report["engine_version"], "0.0.1-ancient")
+        self.assertTrue(any("0.0.1-ancient" in w for w in report["warnings"]))
+
+
 if __name__ == "__main__":
     unittest.main()

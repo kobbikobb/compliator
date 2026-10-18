@@ -11,7 +11,7 @@ than large ones, and there is no roadmap obligation implied by opening an issue.
   `example.com`) and clearly synthetic identifiers.
 - **Do not copy copyrighted material.** No ISO/IEC standard text, no vendor
   templates, no third-party data models. Cite standards by identifier only.
-- **Keep the trust boundary small.** `compliator/packager.py` is the component
+- **Keep the trust boundary small.** `src/compliator/packager.py` is the component
   auditors are asked to trust. Changes there need reasoning about hashing,
   canonicalisation, and the never-write-empty-evidence rule, not just passing
   tests.
@@ -22,12 +22,13 @@ than large ones, and there is no roadmap obligation implied by opening an issue.
 
 ```bash
 python3 -m pip install -r requirements.txt
-python3 -m unittest discover -s tests -v
-python3 -m compliator collect          # runs against the synthetic fixtures
-python3 -m compliator verify evidence
+PYTHONPATH=src python3 -m unittest discover -s tests -v
+PYTHONPATH=src python3 -m compliator collect          # runs against the synthetic fixtures
+PYTHONPATH=src python3 -m compliator verify evidence
 ```
 
-`make demo`, `make test`, `make clean` wrap the same commands.
+The engine is imported from `src/`, not installed, so `PYTHONPATH=src` is the
+whole setup. `make demo`, `make test`, `make clean` wrap the same commands.
 
 ## What a change should include
 

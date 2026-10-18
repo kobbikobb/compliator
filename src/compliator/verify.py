@@ -4,6 +4,16 @@ Re-computes every hash in a record's MANIFEST.json and checks that
 evidence.json still binds the raw payload it claims. This is the command an
 auditor (or a skeptical engineer) runs to confirm nothing was edited after
 collection - the POC's whole answer to "why should I trust this?".
+
+Two records-level pins are enforced or reported as well, so that "verified"
+means the verifier understood what it was reading:
+
+  * ``schema`` - evidence.json and MANIFEST.json must declare a schema this
+    verifier knows. Re-hashing a format you do not understand and printing OK
+    would be a false assurance, so an unknown schema is a hard error.
+  * ``engine_version`` - a record written by a different engine version still
+    verifies (the hashes do not care), but that skew is reported rather than
+    silently ignored.
 """
 
 from __future__ import annotations
@@ -11,7 +21,20 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from . import __version__
 from .errors import VerificationError
+from .packager import EVIDENCE_SCHEMA, MANIFEST_SCHEMA
+
+
+def _require_schema(record_dir: Path, kind: str, found: object, expected: str) -> None:
+    """Refuse documents whose schema this verifier does not understand."""
+    if found is None:
+        raise VerificationError(f"{record_dir}: {kind} declares no schema id")
+    if found != expected:
+        raise VerificationError(
+            f"{record_dir}: unsupported {kind} schema '{found}' "
+            f"(this verifier understands '{expected}')"
+        )
 
 
 def verify_record(record_dir: Path) -> dict[str, object]:
@@ -31,6 +54,20 @@ def verify_record(record_dir: Path) -> dict[str, object]:
         evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise VerificationError(f"{record_dir}: unreadable JSON: {exc}") from exc
+
+    _require_schema(record_dir, "manifest", manifest.get("schema"), MANIFEST_SCHEMA)
+    _require_schema(record_dir, "evidence", evidence.get("schema"), EVIDENCE_SCHEMA)
+
+    collection = evidence.get("collection", {})
+    engine_version = collection.get("engine_version")
+    warnings: list[str] = []
+    if not engine_version:
+        warnings.append("record does not say which engine version wrote it")
+    elif engine_version != __version__:
+        warnings.append(
+            f"record written by engine {engine_version}, "
+            f"verified with {__version__} (hashes are version-independent)"
+        )
 
     import hashlib
 
@@ -65,7 +102,10 @@ def verify_record(record_dir: Path) -> dict[str, object]:
         "record": str(record_dir),
         "control_id": evidence.get("control", {}).get("id"),
         "result": evidence.get("result"),
-        "collection_id": evidence.get("collection", {}).get("id"),
+        "collection_id": collection.get("id"),
+        "engine_version": engine_version,
+        "schema": evidence.get("schema"),
+        "warnings": warnings,
         "files_verified": sorted(checked),
         "ok": True,
     }

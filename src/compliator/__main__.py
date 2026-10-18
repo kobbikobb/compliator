@@ -1,5 +1,8 @@
 """CLI entry point: ``python -m compliator <command>``.
 
+The package is imported from ``src/`` rather than installed, so from a checkout
+run it as ``PYTHONPATH=src python3 -m compliator <command>``.
+
 Commands:
     collect   run the collection engine over configured controls
     verify    re-verify hashes of an evidence record (or a whole evidence root)
@@ -58,16 +61,23 @@ def _cmd_collect(args: argparse.Namespace) -> int:
     )
 
 
+def _print_warnings(report: dict[str, object]) -> None:
+    for warning in report.get("warnings", []):  # type: ignore[union-attr]
+        print(f"    warning: {warning}")
+
+
 def _cmd_verify(args: argparse.Namespace) -> int:
     path = Path(args.path)
     if (path / "MANIFEST.json").is_file():
         report = verify_record(path)
         print(f"OK  {report['control_id']}  result={report['result']}  {report['record']}")
         print(f"    verified files: {', '.join(report['files_verified'])}")  # type: ignore[arg-type]
+        _print_warnings(report)
         return 0
     reports = verify_all(path)
     for report in reports:
         print(f"OK  {report['control_id']}  result={report['result']}  {report['record']}")
+        _print_warnings(report)
     print(f"{len(reports)} record(s) verified.")
     return 0
 

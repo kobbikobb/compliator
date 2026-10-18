@@ -10,12 +10,14 @@ Inspect the existing prototype, separate what is genuinely public-safe from what
 is not, prepare a minimal credible open-source repository, and publish to a
 personal GitHub account with a clean history.
 
-Existing work kept: the evidence-verification engine in `compliator/` (config
+Existing work kept: the evidence-verification engine in `src/compliator/` (config
 loader, evaluator, packager, verifier, thin fixture plugins, 7 example controls,
-42 tests, synthetic fixtures). Nothing in it is being rewritten.
+48 tests, synthetic fixtures). Nothing in it is being rewritten; the verifier now
+enforces the schema ids a record declares and reports engine-version skew, so a
+record can no longer store a checkout-specific verification command.
 
-Status: repository prepared locally, public-release checks run, publication
-pending a final name/identity confirmation. See the handoff report for details.
+Status: repository public; Milestone 0 closes when the getting-started documents
+merge. See the handoff report for details.
 
 ## Milestone 1 — Architecture vision
 
@@ -118,8 +120,5 @@ relevant milestone needs them:
   and have not been checked against SOC 2 TSC or ISO/IEC 27001:2022 Annex A.
 - Records are only as trustworthy as the manifest they ship with; there is no
   external notarisation, and `LATEST.json` is trusted for staleness.
-- Generated evidence embeds an absolute filesystem path in `verify_with`
-  (see any `MANIFEST.json`); fine locally, unhelpful for portability. Fix when
-  records are first shared between machines.
 - No retention, immutability, access control, scheduling, or remediation
   workflow — by design, for now.
