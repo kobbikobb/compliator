@@ -7,15 +7,20 @@
 #      README.md are handed over as the coding guidelines, so a comment argues
 #      from "synthetic data only", "cite standards by identifier", "an empty
 #      population is an error" instead of generic taste.
-#   2. A bot does not approve. `request_changes_workflow` stays off: the
-#      documents say a named human approves, and an automated approval would
-#      read as one. Comments are advisory.
+#   2. A bot does not approve. `request_changes_workflow` stays off, so
+#      CodeRabbit comments rather than gating the branch. Its approve command
+#      exists, but approval here is a human action: the documents say a named
+#      human approves, and an automated approval would read as one.
 #
 # Honest limitation: this repository is public with fewer than 10 stars, so
 # CodeRabbit does not start reviews by itself - no setting here changes that,
 # only the star count does. Until then a review begins with
 # `@coderabbitai review` on the pull request. The auto_review block is written
 # for the day that stops being true.
+#
+# Source for that, since it is counter-intuitive:
+# https://docs.coderabbit.ai/management/plans - "For public repositories with
+# less than 10 stars, CodeRabbit requires reviews to be triggered manually."
 language: en-US
 early_access: false
 
@@ -124,6 +129,7 @@ reviews:
     zizmor: { enabled: true }
     checkmake: { enabled: true } # the Makefile is the documented entry point
     github-checks: { enabled: true }
+    ast-grep: { enabled: true } # generic patterns, not language-bound
     gitleaks: { enabled: true }
     trufflehog: { enabled: true }
     osvScanner: { enabled: true }
@@ -131,7 +137,6 @@ reviews:
     languagetool: { enabled: false } # prose here is deliberate; not a style check
 
     # Off: no code in these languages, or nothing for the tool to read.
-    ast-grep: { enabled: true }
     biome: { enabled: false }
     eslint: { enabled: false }
     oxc: { enabled: false }

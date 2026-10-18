@@ -123,5 +123,6 @@ relevant milestone needs them:
 - **Automated review is manual.** The repository sits below CodeRabbit's ten-star
   threshold, so the review bot starts only when someone asks it to
   (`@coderabbitai review`). No configuration changes that; popularity does.
+  Source: <https://docs.coderabbit.ai/management/plans>.
 - No retention, immutability, access control, scheduling, or remediation
   workflow — by design, for now.
