@@ -3,16 +3,9 @@
 **Repo-native compliance evidence: verifiable records, deterministic checks, no
 platform required.**
 
-A small experiment in running an ISMS out of a git repository. The documents —
-scope, policies, risks, applicability — are Markdown you review like code. The
-evidence is verifiable: anyone can re-derive a verdict from a record without
-running this application.
-
-> **Status: early prototype.** The evidence engine works end to end on synthetic
-> fixtures and is covered by tests. It has never collected from a real system of
-> record and has never been seen by an auditor. The ISMS documents are templates
-> with no real content. Framework references are illustrative placeholders. Do
-> not use any of this to claim compliance.
+An ISMS kept in a git repository. The documents — scope, policies, risks,
+applicability — are Markdown you review like code. The evidence is verifiable:
+anyone can re-derive a verdict from a record without running this application.
 
 ## The idea in one line
 
@@ -22,25 +15,22 @@ The evidence artifact is the product; the tool is disposable.
 
 | | Lives in | Needs software? |
 | --- | --- | --- |
-| **ISMS documents** — scope, policies, risks, statement of applicability | the repository root: [`scope.md`](scope.md), [`policies/`](policies/), [`risks/`](risks/), [`soa.iso_27001_2022.md`](soa.iso_27001_2022.md) | No. Markdown in git. |
+| **ISMS documents** — scope, policies, risks, statement of applicability | [`isms/`](isms/) | No. Markdown in git. |
 | **Verification engine** — declares checks and packages verifiable evidence | [`compliator/`](compliator/) | Yes. Python, one dependency. |
 
 You can keep an ISMS in this repository without ever installing the engine, and
 start collecting evidence later for whichever controls are machine-checkable.
 
-## Four concepts
-
-| Concept | Meaning |
-| --- | --- |
-| **Control** | The security claim or obligation being evaluated. |
-| **Source** | A system of record providing observed facts (here: a mock GitHub org). |
-| **Check** | A declared assertion over those facts, evaluated deterministically. |
-| **Record** | A reproducible evidence package: the configuration used, observed values, the raw source payload, the verdict, and integrity metadata. |
-
-Flow: **fetch facts → evaluate checks → package record → verify integrity and
-re-evaluate.**
-
 ## How it works
+
+1. **Declare a control.** The claim being evaluated, in `config/controls/*.yaml`.
+2. **Point it at a source.** A system of record, in `config/sources.yaml`.
+3. **Write the checks.** Assertions over the facts that source returns.
+4. **Collect.** A plugin pulls the raw facts; one evaluator decides pass or fail.
+5. **Package the record.** Verdict, observed values, the raw payload, hashes.
+6. **Verify.** Recompute the hashes and re-evaluate the checks from the record alone.
+
+## Under the hood
 
 ```
 config/controls/*.yaml ─┐
@@ -72,8 +62,8 @@ Properties the design holds onto:
 
 ## Why not just use a compliance platform?
 
-This is not an argument that platforms are worthless. It is an experiment in a
-different trade-off: instead of trusting a vendor's summary, make the evidence
+This is not an argument that platforms are worthless. It takes a different
+trade-off: instead of trusting a vendor's summary, make the evidence
 itself independently checkable, and keep it in git where it can be reviewed like
 code. Both approaches produce the same underlying evidence for an auditor; the
 difference is inspectability and where it lives. See [`VISION.md`](VISION.md) for
@@ -90,12 +80,12 @@ Each step gives the next one something to reference.
 
 | # | Document | Where |
 | --- | --- | --- |
-| 0 | **Scope** — organisation, systems, data, boundaries, exclusions | [`scope.md`](scope.md) |
-| 1 | **Information Security Policy** (`POL-001`) — the commitment | [`policies/`](policies/) |
-| 2 | **Risk Management Policy** (`POL-002`) — how you handle risk | [`policies/`](policies/) |
-| 3 | **Risks** — assessed and treated, `RISK-001`… | [`risks/`](risks/) |
-| 4 | **Statement of Applicability** — which framework controls apply, and why | [`soa.iso_27001_2022.md`](soa.iso_27001_2022.md) |
-| 5 | **The rest of the policies** (`POL-003`…) — only the ones the SoA calls for | [`policies/`](policies/) |
+| 0 | **Scope** — organisation, systems, data, boundaries, exclusions | [`isms/scope.md`](isms/scope.md) |
+| 1 | **Information Security Policy** (`POL-001`) — the commitment | [`isms/policies/`](isms/policies/) |
+| 2 | **Risk Management Policy** (`POL-002`) — how you handle risk | [`isms/policies/`](isms/policies/) |
+| 3 | **Risks** — assessed and treated, `RISK-001`… | [`isms/risks/`](isms/risks/) |
+| 4 | **Statement of Applicability** — which framework controls apply, and why | [`isms/soa.iso_27001_2022.md`](isms/soa.iso_27001_2022.md) |
+| 5 | **The rest of the policies** (`POL-003`…) — only the ones the SoA calls for | [`isms/policies/`](isms/policies/) |
 | 6 | **Controls** — the machine-checkable claims | [`config/controls/`](config/controls/) |
 
 Two things this order is doing, because they are easy to get wrong:
@@ -107,9 +97,9 @@ Two things this order is doing, because they are easy to get wrong:
 - **Scope is document #0, not `POL-000`.** Scope says *what is covered*; a policy
   says *what you must do*. Living outside the boundary is a definition; breaking a
   policy is a violation. They are evidenced differently.
-- **The documents live at the repository root, next to the controls and manual
-  forms they reference.** There is no separate `isms/` directory: this repository
-  *is* the ISMS, and `compliator/` is one tool inside it.
+- **The documents live in [`isms/`](isms/), next to the controls and manual forms
+  they reference.** `compliator/` is one tool inside the repository, not the
+  repository.
 
 ### Conventions for the documents
 
@@ -123,7 +113,7 @@ Written once here so each folder's README can stay about its own subject.
   their own scheme (`soc2-cc8.1`). An id is permanent: the trace from a policy
   to the evidence that proves it runs through ids, so renaming one breaks
   history. Numbering encodes sequence, not importance — see
-  [`policies/README.md`](policies/README.md).
+  [`isms/policies/README.md`](isms/policies/README.md).
 - **Every document has a named owner and a review date.** An unattributed
   document is not evidence of anything.
 - **`status:` is honest.** `draft` means nobody has approved it. Agents draft and
@@ -136,7 +126,7 @@ Written once here so each folder's README can stay about its own subject.
   signed form is evidence the rule was followed.
 
 The recommended numbering of the policies, which is also the order to write them
-in, is in [`policies/README.md`](policies/README.md).
+in, is in [`isms/policies/README.md`](isms/policies/README.md).
 
 ### Where frameworks fit
 
@@ -144,7 +134,7 @@ A framework is external and fixed; your controls are yours. The mapping is
 many-to-many — one control can satisfy requirements in several frameworks — and
 the statement of applicability is where applicability gets decided. That model,
 including where the current free-text framework references in the control configs
-should go instead, is written up in [`frameworks.md`](frameworks.md).
+should go instead, is written up in [`isms/frameworks.md`](isms/frameworks.md).
 
 ## Running the engine
 
@@ -179,11 +169,11 @@ contains, and how to add a control or a source are all in
 ## Layout
 
 ```
-scope.md                     the ISMS scope: what is covered, what is not
-policies/                    what you must do, one file per policy - see policies/README.md
-risks/                       what could go wrong, one file per risk - see risks/README.md
-soa.iso_27001_2022.md        which framework controls apply, and why (one per framework)
-frameworks.md                how frameworks relate to policies and controls
+isms/scope.md                the ISMS scope: what is covered, what is not
+isms/policies/               what you must do, one file per policy
+isms/risks/                  what could go wrong, one file per risk
+isms/soa.iso_27001_2022.md   which framework controls apply, and why (one per framework)
+isms/frameworks.md           how frameworks relate to policies and controls
 config/sources.yaml          named sources, each mapping to one plugin
 config/controls/*.yaml       one file per control: metadata + declarative checks
 fixtures/                    synthetic GitHub org, cloud account, HR roster, vendors

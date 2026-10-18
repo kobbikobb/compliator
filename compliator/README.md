@@ -1,7 +1,7 @@
 # Compliator — the software
 
 The engine that turns declared checks into verifiable evidence records. Optional:
-the ISMS documents at the repository root work perfectly well without it.
+the ISMS documents in [`../isms/`](../isms/) work perfectly well without it.
 
 Everything here runs against synthetic fixtures. No network, no credentials, no
 cloud account, no database.
@@ -88,7 +88,7 @@ control:
     ...
   owner: security@example.invalid
   frequency: 1d             # evidence older than this is flagged stale
-  frameworks:               # free text today; see ../frameworks.md
+  frameworks:               # free text today; see ../isms/frameworks.md
     soc2: "CC6.6 - ..."
     iso_27001: "A.8.16 - ..."
 source: github_org          # must exist in config/sources.yaml

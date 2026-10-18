@@ -54,7 +54,7 @@ That means:
 - `frameworks/<framework-id>.yaml` — a catalog (promote this file to a `frameworks/` folder then): identifier, our own
   one-line summary, whether it is a clause or a control, framework version.
   **Identifiers and our own summaries only.** No copyrighted standard text is
-  stored or redistributed ([`VISION.md`](VISION.md), principle 9).
+  stored or redistributed ([`../VISION.md`](../VISION.md), principle 9).
 - Control configs keep the mapping, structured and validated:
 
   ```yaml
@@ -70,7 +70,7 @@ That means:
   reinterpret old evidence.
 - Later: a coverage report — reverse the mapping and list requirements with no
   covering control, plus the documentation-consistency checks described in
-  [`PLAN.md`](PLAN.md).
+  [`../PLAN.md`](../PLAN.md).
 
 ## Open questions
 
@@ -87,5 +87,5 @@ That means:
 ## Status
 
 Written up now so the shape is visible before code exists. Milestone 1 reviews
-it alongside [`VISION.md`](VISION.md); the catalog and validation are
+it alongside [`../VISION.md`](../VISION.md); the catalog and validation are
 their own later change.

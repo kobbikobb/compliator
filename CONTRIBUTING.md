@@ -1,6 +1,6 @@
 # Contributing
 
-This is an early experiment. Small, well-explained changes are much more useful
+This is early work. Small, well-explained changes are much more useful
 than large ones, and there is no roadmap obligation implied by opening an issue.
 
 ## Ground rules

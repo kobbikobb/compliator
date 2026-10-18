@@ -10,7 +10,7 @@ claims that implement it, and evidence is the proof they hold.
 
 Numbering encodes the **sequence you should write them in**, not importance.
 Steps 3–4 in the table below are the risk work that sits between policy #2 and
-policy #3 (see the order in [`../README.md`](../README.md)) — that gap is deliberate.
+policy #3 (see the order in [`../../README.md`](../../README.md)) — that gap is deliberate.
 
 | # | File | What it says | Checkable? |
 | --- | --- | --- | --- |
@@ -34,7 +34,7 @@ out, or fold them in elsewhere. Fewer, true policies beat a full set nobody
 follows.
 
 Process documents that are *not* policies, and belong later (Milestone 3+ in
-[`../PLAN.md`](../PLAN.md)): control of documented information, internal
+[`../../PLAN.md`](../../PLAN.md)): control of documented information, internal
 audit, management review, nonconformity and corrective action.
 
 ## Two kinds of statement, and they are not equal
@@ -79,5 +79,5 @@ controls:                     # ids from config/controls/
 Setting `status: approved` and filling `approved_by` is a human act. An agent may
 draft a policy, propose an update, and flag that a review is due. It may not
 approve one, and a change that flips `status` to `approved` with no named human
-behind it should be rejected in review — [`../VISION.md`](../VISION.md),
+behind it should be rejected in review — [`../../VISION.md`](../../VISION.md),
 principle 5.

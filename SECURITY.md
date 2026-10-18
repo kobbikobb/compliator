@@ -36,8 +36,8 @@ Please report security problems privately rather than in a public issue:
 
 Include: what you found, how to reproduce it, the affected version/commit, and
 the impact you believe it has. There is no bug bounty and no guaranteed
-response time — this is an experiment maintained in spare time — but genuine
-reports are appreciated and will be acknowledged.
+response time — this is maintained in spare time — but genuine reports are
+appreciated and will be acknowledged.
 
 ## Scope and expectations
 

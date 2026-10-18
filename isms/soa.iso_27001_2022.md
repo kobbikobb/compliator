@@ -37,7 +37,7 @@ Rules for filling it in:
 - **One row per framework control, no more, no less.** A missing row is a gap you
   cannot see, so do not mark this `status: approved` while a row is missing.
 - **Identifiers only.** `A.8.32`, `CC8.1`, with your own one-line summary. Never
-  paste standard text ([`SECURITY.md`](SECURITY.md)).
+  paste standard text ([`../SECURITY.md`](../SECURITY.md)).
 - **Status is honest.** `not_implemented` and `partial` are normal and useful;
   `implemented` with no covering control is a claim, not a fact.
 

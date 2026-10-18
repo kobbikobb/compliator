@@ -12,7 +12,7 @@ review_cadence: annual
 > do*. Living outside the boundary is a definition, breaking a policy is a
 > violation, and the two are evidenced differently. The standard treats scope as
 > its own documented information (clause 4.3), so it is document #0 in the
-> reading order — not `POL-000`. Conventions and ids are in [`README.md`](README.md).
+> reading order — not `POL-000`. Conventions and ids are in [`../README.md`](../README.md).
 >
 > **Decision: kept as its own document.** Clause 4.3 requires the scope to be
 > available as documented information; it does not require a separate file, and a
@@ -32,7 +32,7 @@ review_cadence: annual
 
 *Who you are, in one paragraph. What the business actually does, how many
 people, and how it is run. For the fictional reference company, see Milestone 2
-in [`PLAN.md`](PLAN.md).*
+in [`../PLAN.md`](../PLAN.md).*
 
 | Field | Value |
 | --- | --- |
@@ -79,7 +79,7 @@ wrote down look like gaps; written down, they are decisions.*
 *Who is accountable for the ISMS, who approves policies, and who accepts risk.
 For a solo developer this may all be one person — say so plainly rather than
 inventing a committee. Note explicitly that an agent may draft and maintain but
-not approve (see [`VISION.md`](VISION.md)).*
+not approve (see [`../VISION.md`](../VISION.md)).*
 
 | Role | Held by | Accountable for |
 | --- | --- | --- |
