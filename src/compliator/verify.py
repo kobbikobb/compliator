@@ -114,9 +114,15 @@ def verify_record(record_dir: Path) -> dict[str, object]:
 def verify_all(evidence_root: Path) -> list[dict[str, object]]:
     """Verify every record directory under an evidence root."""
     results = []
-    for record_dir in sorted(Path(evidence_root).glob("*/*/")):
-        if (record_dir / "MANIFEST.json").is_file():
-            results.append(verify_record(record_dir))
+    # Iterate the two levels explicitly, then filter on is_dir: before Python
+    # 3.13 pathlib ignores a trailing slash, so glob("*/*/") also yields files
+    # (LATEST.json sits at this level). Either way the MANIFEST.json test below
+    # would skip them, but saying it outright beats relying on that.
+    for collection_dir in sorted(Path(evidence_root).glob("*/*")):
+        if not collection_dir.is_dir():
+            continue
+        if (collection_dir / "MANIFEST.json").is_file():
+            results.append(verify_record(collection_dir))
     if not results:
         raise VerificationError(f"no evidence records found under {evidence_root}")
     return results

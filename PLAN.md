@@ -12,7 +12,7 @@ personal GitHub account with a clean history.
 
 Existing work kept: the evidence-verification engine in `src/compliator/` (config
 loader, evaluator, packager, verifier, thin fixture plugins, 7 example controls,
-48 tests, synthetic fixtures). Nothing in it is being rewritten; the verifier now
+49 tests, synthetic fixtures). Nothing in it is being rewritten; the verifier now
 enforces the schema ids a record declares and reports engine-version skew, so a
 record can no longer store a checkout-specific verification command.
 
