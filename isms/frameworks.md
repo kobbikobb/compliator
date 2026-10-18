@@ -64,7 +64,7 @@ That means:
   ```
 
   The loader fails loudly on an identifier that is not in the catalog — a small
-  change to `compliator/config.py`, turning a comment into an assertion.
+  change to `src/compliator/config.py`, turning a comment into an assertion.
 - The framework version is pinned in the catalog and, ideally, in the evidence
   record alongside `config_sha256`, so a framework revision cannot silently
   reinterpret old evidence.

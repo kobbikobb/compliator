@@ -1,18 +1,21 @@
 .PHONY: demo collect verify test list clean
 
+# The engine is imported from src/, not installed, so it needs src on the path.
+PYTHONPATH := src
+
 demo: collect verify
 
 collect:
-	python3 -m compliator collect
+	PYTHONPATH=$(PYTHONPATH) python3 -m compliator collect
 
 verify:
-	python3 -m compliator verify evidence
+	PYTHONPATH=$(PYTHONPATH) python3 -m compliator verify evidence
 
 test:
-	python3 -m unittest discover -s tests
+	PYTHONPATH=$(PYTHONPATH) python3 -m unittest discover -s tests
 
 list:
-	python3 -m compliator list
+	PYTHONPATH=$(PYTHONPATH) python3 -m compliator list
 
 clean:
 	rm -rf evidence

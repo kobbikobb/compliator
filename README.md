@@ -16,7 +16,7 @@ The evidence artifact is the product; the tool is disposable.
 | | Lives in | Needs software? |
 | --- | --- | --- |
 | **ISMS documents** — scope, policies, risks, statement of applicability | [`isms/`](isms/) | No. Markdown in git. |
-| **Verification engine** — declares checks and packages verifiable evidence | [`compliator/`](compliator/) | Yes. Python, one dependency. |
+| **Verification engine** — declares checks and packages verifiable evidence | [`src/compliator/`](src/compliator/) | Yes. Python, one dependency. |
 
 You can keep an ISMS in this repository without ever installing the engine, and
 start collecting evidence later for whichever controls are machine-checkable.
@@ -98,8 +98,9 @@ Two things this order is doing, because they are easy to get wrong:
   says *what you must do*. Living outside the boundary is a definition; breaking a
   policy is a violation. They are evidenced differently.
 - **The documents live in [`isms/`](isms/), next to the controls and manual forms
-  they reference.** `compliator/` is one tool inside the repository, not the
-  repository.
+  they reference.** `src/compliator/` is one tool inside the repository, not the
+  repository; the folder named after the project holds the package, not the
+  project.
 
 ### Conventions for the documents
 
@@ -142,14 +143,15 @@ Optional, and independent of the documents above.
 
 ```bash
 python3 -m pip install -r requirements.txt
-python3 -m compliator collect              # against the synthetic fixtures
-python3 -m compliator verify evidence
-python3 -m unittest discover -s tests -v
+PYTHONPATH=src python3 -m compliator collect   # against the synthetic fixtures
+PYTHONPATH=src python3 -m compliator verify evidence
+PYTHONPATH=src python3 -m unittest discover -s tests -v
 ```
 
+The engine is imported from `src/` rather than installed, so `PYTHONPATH=src` is
+the whole setup — or use `make demo` / `make test`, which set it for you.
 Prerequisites, flags, exit codes, the failure paths worth trying, what a record
-contains, and how to add a control or a source are all in
-[`compliator/README.md`](compliator/README.md).
+contains, and how to add a control or a source are all in [`ENGINE.md`](ENGINE.md).
 
 ## How this differs from an ISMS (and from certification)
 
@@ -178,10 +180,10 @@ config/sources.yaml          named sources, each mapping to one plugin
 config/controls/*.yaml       one file per control: metadata + declarative checks
 fixtures/                    synthetic GitHub org, cloud account, HR roster, vendors
 manual/                      synthetic human-filled forms
-compliator/                  the engine - see compliator/README.md
+src/compliator/              the engine package - see ENGINE.md
 evidence/<control-id>/       generated output (gitignored)
 tests/                       stdlib unittest suite
-VISION.md · PLAN.md · SECURITY.md · CONTRIBUTING.md
+ENGINE.md · VISION.md · PLAN.md · SECURITY.md · CONTRIBUTING.md
 ```
 
 ## Limitations

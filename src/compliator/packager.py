@@ -11,8 +11,8 @@ rules here are deliberately boring and explicit:
      A pass/fail summary is worthless without the population underneath it.
   2. EVERYTHING IS HASHED. The record's MANIFEST.json lists a SHA-256 for
      every file, and evidence.json binds the raw payload hash. Anyone can
-     re-verify with ``python -m compliator verify <record-dir>`` - trust
-     comes from re-computation, not from trusting this code's output.
+     re-verify with ``PYTHONPATH=src python3 -m compliator verify <record-dir>``
+     - trust comes from re-computation, not from trusting this code's output.
   3. PROVENANCE IS EXPLICIT. Source, plugin, file, file hash, collection
      time, config hash. An auditor can tell where each fact came from and
      whether the control definition changed since.
@@ -137,6 +137,10 @@ def write_record(
     evidence_path = record_dir / "evidence.json"
     evidence_path.write_text(canonical_json(record), encoding="utf-8")
 
+    # No "how to verify" command string is stored. It would be a command line
+    # tied to one checkout layout, sitting inside a hashed artifact, going stale
+    # the moment the CLI changes - and nothing verifies it. The stable pins are
+    # permanent and enforced: `schema` below, and engine_version in the record.
     manifest = {
         "schema": MANIFEST_SCHEMA,
         "collection_id": cid,
@@ -145,7 +149,6 @@ def write_record(
             "evidence.json": sha256_file(evidence_path),
             raw_rel: sha256_file(raw_path),
         },
-        "verify_with": f"python -m compliator verify {record_dir}",
     }
     manifest_path = record_dir / "MANIFEST.json"
     manifest_path.write_text(canonical_json(manifest), encoding="utf-8")
