@@ -22,7 +22,7 @@ The evidence artifact is the product; the tool is disposable.
 
 | | Lives in | Needs software? |
 | --- | --- | --- |
-| **ISMS documents** — scope, policies, risks, statement of applicability | [`isms/`](isms/) | No. Markdown in git. |
+| **ISMS documents** — scope, policies, risks, statement of applicability | the repository root: [`scope.md`](scope.md), [`policies/`](policies/), [`risks/`](risks/), [`soa/`](soa/) | No. Markdown in git. |
 | **Verification engine** — declares checks and packages verifiable evidence | [`compliator/`](compliator/) | Yes. Python, one dependency. |
 
 You can keep an ISMS in this repository without ever installing the engine, and
@@ -90,12 +90,12 @@ Each step gives the next one something to reference.
 
 | # | Document | Where |
 | --- | --- | --- |
-| 0 | **Scope** — organisation, systems, data, boundaries, exclusions | [`isms/scope/`](isms/scope/) |
-| 1 | **Information Security Policy** (`POL-001`) — the commitment | [`isms/policies/`](isms/policies/) |
-| 2 | **Risk Management Policy** (`POL-002`) — how you handle risk | [`isms/policies/`](isms/policies/) |
-| 3 | **Risks** — assessed and treated, `RISK-001`… | [`isms/risks/`](isms/risks/) |
-| 4 | **Statement of Applicability** — which framework controls apply, and why | [`isms/soa/`](isms/soa/) |
-| 5 | **The rest of the policies** (`POL-003`…) — only the ones the SoA calls for | [`isms/policies/`](isms/policies/) |
+| 0 | **Scope** — organisation, systems, data, boundaries, exclusions | [`scope.md`](scope.md) |
+| 1 | **Information Security Policy** (`POL-001`) — the commitment | [`policies/`](policies/) |
+| 2 | **Risk Management Policy** (`POL-002`) — how you handle risk | [`policies/`](policies/) |
+| 3 | **Risks** — assessed and treated, `RISK-001`… | [`risks/`](risks/) |
+| 4 | **Statement of Applicability** — which framework controls apply, and why | [`soa/`](soa/) |
+| 5 | **The rest of the policies** (`POL-003`…) — only the ones the SoA calls for | [`policies/`](policies/) |
 | 6 | **Controls** — the machine-checkable claims | [`config/controls/`](config/controls/) |
 
 Two things this order is doing, because they are easy to get wrong:
@@ -106,12 +106,37 @@ Two things this order is doing, because they are easy to get wrong:
   were never applicable — the usual failure mode.
 - **Scope is document #0, not `POL-000`.** Scope says *what is covered*; a policy
   says *what you must do*. Living outside the boundary is a definition; breaking a
-  policy is a violation. They are evidenced differently. See
-  [`isms/scope/README.md`](isms/scope/README.md).
+  policy is a violation. They are evidenced differently.
+- **The documents live at the repository root, next to the controls and manual
+  forms they reference.** There is no separate `isms/` directory: this repository
+  *is* the ISMS, and `compliator/` is one tool inside it.
 
-The full conventions, and the recommended numbering of the policies (which is
-also the order to write them in), are in [`isms/README.md`](isms/README.md) and
-[`isms/policies/README.md`](isms/policies/README.md).
+### Conventions for the documents
+
+Written once here so each folder's README can stay about its own subject.
+
+- **Markdown, with narrow front matter.** A few keys that something actually
+  reads. Structured metadata only where a machine needs it.
+- **One file per policy, one per risk.** Reviews then show up as a readable diff
+  against a single document.
+- **Stable ids.** `SCOPE-001`, `POL-001`, `RISK-001`, `SOA-001`; controls use
+  their own scheme (`soc2-cc8.1`). An id is permanent: the trace from a policy
+  to the evidence that proves it runs through ids, so renaming one breaks
+  history. Numbering encodes sequence, not importance — see
+  [`policies/README.md`](policies/README.md).
+- **Every document has a named owner and a review date.** An unattributed
+  document is not evidence of anything.
+- **`status:` is honest.** `draft` means nobody has approved it. Agents draft and
+  propose; a named human approves ([`VISION.md`](VISION.md), principle 5).
+- **No copyrighted standard text.** Reference requirements by identifier
+  (`A.8.32`, `CC8.1`) with your own one-line summary. Do not paste Annex A or TSC
+  text into this repository.
+- **Simulated data only.** The repository is public: [`SECURITY.md`](SECURITY.md).
+- **Manual forms live in [`manual/`](manual/), not here.** A policy is the rule; a
+  signed form is evidence the rule was followed.
+
+The recommended numbering of the policies, which is also the order to write them
+in, is in [`policies/README.md`](policies/README.md).
 
 ### Where frameworks fit
 
@@ -119,8 +144,7 @@ A framework is external and fixed; your controls are yours. The mapping is
 many-to-many — one control can satisfy requirements in several frameworks — and
 the statement of applicability is where applicability gets decided. That model,
 including where the current free-text framework references in the control configs
-should go instead, is written up in
-[`isms/frameworks/README.md`](isms/frameworks/README.md).
+should go instead, is written up in [`frameworks/README.md`](frameworks/README.md).
 
 ## Running the engine
 
@@ -155,12 +179,11 @@ contains, and how to add a control or a source are all in
 ## Layout
 
 ```
-isms/                        the ISMS documents (templates) - see isms/README.md
-  scope/                     what is in scope
-  policies/                  what you must do
-  risks/                     what could go wrong
-  soa/                       which framework controls apply, and why
-  frameworks/                how frameworks relate to policies and controls
+scope.md                     the ISMS scope: what is covered, what is not
+policies/                    what you must do, one file per policy - see policies/README.md
+risks/                       what could go wrong, one file per risk - see risks/README.md
+soa/                         which framework controls apply, and why - see soa/README.md
+frameworks/                  how frameworks relate to policies and controls
 config/sources.yaml          named sources, each mapping to one plugin
 config/controls/*.yaml       one file per control: metadata + declarative checks
 fixtures/                    synthetic GitHub org, cloud account, HR roster, vendors

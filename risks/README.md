@@ -68,4 +68,4 @@ next_review: 2027-04-01
 Risk acceptance needs a name against it — including for a solo developer, who is
 still the accountable person. An agent may draft an assessment, propose a
 treatment, and flag an overdue review. It may not accept a risk on the
-organisation's behalf ([`../../VISION.md`](../../VISION.md), principle 5).
+organisation's behalf ([`../VISION.md`](../VISION.md), principle 5).

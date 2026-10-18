@@ -1,7 +1,7 @@
 # Statement of Applicability
 
-One document per framework that needs one: `SOA-<framework-id>.md`, built from
-[`_template.md`](_template.md). Template only — no SoA has been written.
+One document per framework that needs one, named for the pinned version:
+[`iso_27001_2022.md`](iso_27001_2022.md). Template only — no SoA has been written.
 
 ## What this is
 
@@ -49,7 +49,7 @@ Two wrinkles worth knowing:
 - **One row per framework control, no more, no less.** A missing row is a gap
   you cannot see.
 - **Reference identifiers only.** `A.8.32`, `CC8.1` — with your own one-line
-  summary. Never paste standard text ([`../../SECURITY.md`](../../SECURITY.md)).
+  summary. Never paste standard text ([`../SECURITY.md`](../SECURITY.md)).
 - **Pin the framework version.** `iso_27001_2022`, not `iso_27001`: a revision
   must not silently reinterpret an old decision.
 - **Implementation status is honest.** `not_implemented` and `partial` are
