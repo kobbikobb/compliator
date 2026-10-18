@@ -14,6 +14,16 @@ review_cadence: annual
 > its own documented information (clause 4.3), so it is document #0 in the
 > reading order — not `POL-000`. Conventions and ids are in [`README.md`](README.md).
 >
+> **Decision: kept as its own document.** Clause 4.3 requires the scope to be
+> available as documented information; it does not require a separate file, and a
+> scope section inside `POL-001` would satisfy it. It is kept separate here for
+> two reasons: this file is the applicability domain the SoA cites for exclusions
+> and the risk register is assessed inside, and every policy already has a *Scope*
+> section meaning "who this rule applies to" — folding the ISMS boundary into a
+> policy makes "the scope" mean two different things in one folder. An
+> organisation that folds it in should record that decision here instead of
+> leaving it implicit.
+>
 > **Template.** Delete this block and the italic prompts, keep the headings.
 > Write in plain sentences a new colleague could follow. If a sentence could be
 > pasted into any company's document, it is too generic to be useful.

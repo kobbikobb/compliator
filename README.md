@@ -22,7 +22,7 @@ The evidence artifact is the product; the tool is disposable.
 
 | | Lives in | Needs software? |
 | --- | --- | --- |
-| **ISMS documents** — scope, policies, risks, statement of applicability | the repository root: [`scope.md`](scope.md), [`policies/`](policies/), [`risks/`](risks/), [`soa/`](soa/) | No. Markdown in git. |
+| **ISMS documents** — scope, policies, risks, statement of applicability | the repository root: [`scope.md`](scope.md), [`policies/`](policies/), [`risks/`](risks/), [`soa.iso_27001_2022.md`](soa.iso_27001_2022.md) | No. Markdown in git. |
 | **Verification engine** — declares checks and packages verifiable evidence | [`compliator/`](compliator/) | Yes. Python, one dependency. |
 
 You can keep an ISMS in this repository without ever installing the engine, and
@@ -94,7 +94,7 @@ Each step gives the next one something to reference.
 | 1 | **Information Security Policy** (`POL-001`) — the commitment | [`policies/`](policies/) |
 | 2 | **Risk Management Policy** (`POL-002`) — how you handle risk | [`policies/`](policies/) |
 | 3 | **Risks** — assessed and treated, `RISK-001`… | [`risks/`](risks/) |
-| 4 | **Statement of Applicability** — which framework controls apply, and why | [`soa/`](soa/) |
+| 4 | **Statement of Applicability** — which framework controls apply, and why | [`soa.iso_27001_2022.md`](soa.iso_27001_2022.md) |
 | 5 | **The rest of the policies** (`POL-003`…) — only the ones the SoA calls for | [`policies/`](policies/) |
 | 6 | **Controls** — the machine-checkable claims | [`config/controls/`](config/controls/) |
 
@@ -144,7 +144,7 @@ A framework is external and fixed; your controls are yours. The mapping is
 many-to-many — one control can satisfy requirements in several frameworks — and
 the statement of applicability is where applicability gets decided. That model,
 including where the current free-text framework references in the control configs
-should go instead, is written up in [`frameworks/README.md`](frameworks/README.md).
+should go instead, is written up in [`frameworks.md`](frameworks.md).
 
 ## Running the engine
 
@@ -182,8 +182,8 @@ contains, and how to add a control or a source are all in
 scope.md                     the ISMS scope: what is covered, what is not
 policies/                    what you must do, one file per policy - see policies/README.md
 risks/                       what could go wrong, one file per risk - see risks/README.md
-soa/                         which framework controls apply, and why - see soa/README.md
-frameworks/                  how frameworks relate to policies and controls
+soa.iso_27001_2022.md        which framework controls apply, and why (one per framework)
+frameworks.md                how frameworks relate to policies and controls
 config/sources.yaml          named sources, each mapping to one plugin
 config/controls/*.yaml       one file per control: metadata + declarative checks
 fixtures/                    synthetic GitHub org, cloud account, HR roster, vendors

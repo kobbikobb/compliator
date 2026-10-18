@@ -30,7 +30,7 @@ Openlane. Outcome: an agreed vision plus a list of things we deliberately do not
 do.
 
 Review alongside it the framework model drafted in
-[`frameworks/README.md`](frameworks/README.md): framework requirements
+[`frameworks.md`](frameworks.md): framework requirements
 versus our controls, the many-to-many mapping, and why the free-text framework
 references currently in `config/controls/*.yaml` should become validated
 identifiers. No code for it in this milestone.

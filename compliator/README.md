@@ -88,7 +88,7 @@ control:
     ...
   owner: security@example.invalid
   frequency: 1d             # evidence older than this is flagged stale
-  frameworks:               # free text today; see ../frameworks/README.md
+  frameworks:               # free text today; see ../frameworks.md
     soc2: "CC6.6 - ..."
     iso_27001: "A.8.16 - ..."
 source: github_org          # must exist in config/sources.yaml

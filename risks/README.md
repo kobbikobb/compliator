@@ -6,7 +6,7 @@ for a real organisation would itself be the finding.
 
 A risk is something that could go wrong, how bad it would be, what you do about
 it, and who owns that decision. Controls treat risks; the SoA
-([`../soa/`](../soa/)) records which framework controls you decided are
+([`../soa.iso_27001_2022.md`](../soa.iso_27001_2022.md)) records which framework controls you decided are
 applicable as a result.
 
 ## Keep the register small and honest
