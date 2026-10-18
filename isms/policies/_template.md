@@ -20,7 +20,7 @@ risk: `Treats RISK-003`.*
 ## Scope
 
 *Who and what this applies to. Reference the systems from
-[`../scope.md`](../scope.md) by name rather than restating them.*
+[`../scope/README.md`](../scope/README.md) by name rather than restating them.*
 
 ## Policy statements
 

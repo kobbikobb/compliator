@@ -16,7 +16,7 @@ review_cadence: annual
 
 *Who you are, in one paragraph. What the business actually does, how many
 people, and how it is run. For the fictional reference company, see Milestone 2
-in [`../PLAN.md`](../PLAN.md).*
+in [`../../PLAN.md`](../../PLAN.md).*
 
 | Field | Value |
 | --- | --- |
@@ -63,7 +63,7 @@ wrote down look like gaps; written down, they are decisions.*
 *Who is accountable for the ISMS, who approves policies, and who accepts risk.
 For a solo developer this may all be one person — say so plainly rather than
 inventing a committee. Note explicitly that an agent may draft and maintain but
-not approve (see [`../VISION.md`](../VISION.md)).*
+not approve (see [`../../VISION.md`](../../VISION.md)).*
 
 | Role | Held by | Accountable for |
 | --- | --- | --- |
