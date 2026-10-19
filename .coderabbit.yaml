@@ -51,7 +51,7 @@ reviews:
     - path: "src/compliator/packager.py"
       instructions: >
         The trust boundary, the one component an auditor is asked to trust.
-        Review it as production code: canonicalisation and hash coverage of
+        Review it as production code: deterministic serialisation and hash coverage of
         every emitted file, the raw payload binding in evidence.json, the rule
         that LATEST.json moves only on success, and the absence of any
         try/except that could turn a failure into an empty record. A change here

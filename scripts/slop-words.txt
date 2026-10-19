@@ -1,0 +1,79 @@
+# Vocabulary this repository refuses to merge.
+#
+# The project voice is "precise, unhyped, no marketing adjectives"
+# (.coderabbit.yaml, *.md path_instructions). These words are how that voice
+# dies: AI-slop fillers and marketing adjectives that assert nothing.
+#
+# `scripts/check_words.py` enforces this on every tracked file — content and
+# file names. Matching is case-insensitive; a single word matches as a prefix
+# (so `canonical` also catches `canonicalisation`); a phrase matches as a
+# substring. Edit this list in the pull request that argues for the change.
+
+# The word this project most over-reached for. JSON serialisation is
+# "deterministic" or "byte-stable"; "canonical" claimed more than it meant.
+canonical
+
+# Seamlessness nobody measured.
+seamless
+seamlessly
+
+# Capability adjectives with no test behind them.
+robust
+leverage
+utilize
+utilizes
+utilizing
+utilise
+utilises
+utilising
+holistic
+synergy
+paradigm
+crucial
+pivotal
+
+# Launch-language.
+cutting-edge
+cutting edge
+state-of-the-art
+next-generation
+game-changer
+game-changing
+world-class
+best-in-class
+revolutionary
+supercharge
+streamline
+streamlining
+hassle-free
+effortless
+innovative
+
+# AI-slop colour words: prose that describes a feeling, not a system.
+delve
+delves
+delving
+tapestry
+vibrant
+bustling
+nestled
+boast
+boasts
+showcase
+showcases
+showcasing
+testament
+underscor
+plethora
+myriad
+landscape
+realm
+beacon
+embark
+
+# Aspiration verbs with no object.
+unlock
+unleash
+empower
+elevate
+foster

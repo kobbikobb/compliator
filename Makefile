@@ -1,4 +1,4 @@
-.PHONY: demo collect verify test list status clean
+.PHONY: demo collect verify test list status check-words clean
 
 # The engine is imported from src/, not installed, so it needs src on the path.
 PYTHONPATH := src
@@ -28,3 +28,7 @@ status:
 clean:
 	rm -rf evidence/*
 	mkdir -p evidence
+
+# Banned vocabulary gate; the list is scripts/slop-words.txt.
+check-words:
+	python3 scripts/check_words.py

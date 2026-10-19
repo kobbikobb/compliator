@@ -138,12 +138,12 @@ class TestPackagerAndVerify(unittest.TestCase):
 
     def _write_synthetic_record(self, *, evidence_schema, manifest_schema, engine_version="0.0.1-ancient"):
         """A hand-built record with valid hashes, so schema pins are tested alone."""
-        from compliator.packager import canonical_json, sha256_file
+        from compliator.packager import deterministic_json, sha256_file
 
         record = self.tmp / "synthetic" / "c1"
         (record / "raw").mkdir(parents=True)
         raw_path = record / "raw" / "source.json"
-        raw_path.write_text(canonical_json({"resources": []}), encoding="utf-8")
+        raw_path.write_text(deterministic_json({"resources": []}), encoding="utf-8")
         evidence = {
             "schema": evidence_schema,
             "control": {"id": "synthetic-1"},
@@ -152,7 +152,7 @@ class TestPackagerAndVerify(unittest.TestCase):
             "result": "pass",
         }
         evidence_path = record / "evidence.json"
-        evidence_path.write_text(canonical_json(evidence), encoding="utf-8")
+        evidence_path.write_text(deterministic_json(evidence), encoding="utf-8")
         manifest = {
             "collection_id": "c1",
             "control_id": "synthetic-1",
@@ -163,7 +163,7 @@ class TestPackagerAndVerify(unittest.TestCase):
         }
         if manifest_schema is not None:
             manifest["schema"] = manifest_schema
-        (record / "MANIFEST.json").write_text(canonical_json(manifest), encoding="utf-8")
+        (record / "MANIFEST.json").write_text(deterministic_json(manifest), encoding="utf-8")
         return record
 
     def test_verify_rejects_unknown_evidence_schema(self):

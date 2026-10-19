@@ -92,7 +92,7 @@ relevant milestone needs them:
   can be legitimate. Distinguish *no population defined*, *enumeration failed*,
   and *legitimately absent resources*.
 - **Reproducible ≠ byte-identical.** Timestamps and IDs vary between runs. Define
-  the canonical reproducible part of a record, and what a re-run comparison
+  which parts of a record are reproducible, and what a re-run comparison
   legitimately checks.
 - **Hashing ≠ authentication.** Hashing proves a record was not modified relative
   to a trusted reference. It does not authenticate the collector or prove

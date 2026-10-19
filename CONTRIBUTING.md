@@ -13,10 +13,14 @@ than large ones, and there is no roadmap obligation implied by opening an issue.
   templates, no third-party data models. Cite standards by identifier only.
 - **Keep the trust boundary small.** `src/compliator/packager.py` is the component
   auditors are asked to trust. Changes there need reasoning about hashing,
-  canonicalisation, and the never-write-empty-evidence rule, not just passing
-  tests.
+  deterministic serialisation, and the never-write-empty-evidence rule, not just
+  passing tests.
 - **No new runtime dependencies** without a specific reason in the pull
   request. The engine currently needs only PyYAML.
+- **No banned vocabulary.** Marketing adjectives and AI-slop fillers fail CI
+  in both file contents and file names. The list is
+  [`scripts/slop-words.txt`](scripts/slop-words.txt); `make check-words` runs
+  the gate locally. The list changes by pull request, never by exception.
 
 ## Development
 

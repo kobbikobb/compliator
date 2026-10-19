@@ -176,7 +176,7 @@ are asserted by tests:
 - **Observed values per check**, not just whether it passed.
 - **Explicit population accounting** — an empty population is an error, never a
   vacuous pass.
-- **Reproducible verdicts** — canonical JSON, sorted keys; same facts + same
+- **Reproducible verdicts** — deterministic JSON, sorted keys; same facts + same
   config ⇒ same record apart from the timestamp.
 - **Thin collectors, no hidden judgment** — all assertion logic lives in one
   evaluator, driven by YAML.
