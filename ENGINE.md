@@ -118,6 +118,25 @@ version than the one verifying it. Record integrity is the property the engine
 actually provides; the tests tamper with a raw file and with `evidence.json` and
 assert both are detected.
 
+## Properties the design holds onto
+
+These are why the storage shape and the runner look the way they do, and several
+are asserted by tests:
+
+- **Raw evidence retained** — the storage shape cannot be reduced to a verdict.
+- **Observed values per check**, not just whether it passed.
+- **Explicit population accounting** — an empty population is an error, never a
+  vacuous pass.
+- **Reproducible verdicts** — canonical JSON, sorted keys; same facts + same
+  config ⇒ same record apart from the timestamp.
+- **Thin collectors, no hidden judgment** — all assertion logic lives in one
+  evaluator, driven by YAML.
+- **Manual evidence with provenance** — human forms flow through the same
+  pipeline as machine facts.
+- **Exact policy/check version pinning** — every record carries the hash of the
+  control definition that produced it.
+- **Fail loud** — a broken source is exit code 2, a loud banner, and *no record*.
+
 ## Adding a control
 
 ```yaml
@@ -128,10 +147,12 @@ control:
     ...
   owner: security@example.invalid
   frequency: 1d             # evidence older than this is flagged stale
-    frameworks:               # free text today; see isms/frameworks.md
+  frameworks:               # free text today; see isms/frameworks.md
     soc2: "CC6.6 - ..."
     iso_27001: "A.8.16 - ..."
+
 source: github_org          # must exist in config/sources.yaml
+
 checks:
   - description: ...
     population:             # optional; omit for a single value at a path

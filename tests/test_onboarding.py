@@ -150,12 +150,17 @@ class TestOnboarding(unittest.TestCase):
 
     def test_soc2_needs_no_statement_of_applicability(self):
         answers = write_answers(self.tmp, frameworks="soc2")
-        self._run(answers_path=answers)
+        code, out = self._run(answers_path=answers)
 
+        self.assertEqual(code, 0)
         self.assertFalse(list((self.target / "isms").glob("soa.*.md")))
         frameworks = (self.target / "isms/frameworks.md").read_text(encoding="utf-8")
         self.assertIn("SOC 2 Trust Services Criteria", frameworks)
         self.assertIn("not required", frameworks)
+        # It is not a document waiting to be written, so it must not be reported
+        # as one the user declined.
+        self.assertIn("No statement of applicability", out)
+        self.assertNotIn("soa.iso_27001_2022.md,", out)
 
     def test_both_frameworks_write_one_soa_and_record_both(self):
         answers = write_answers(self.tmp, frameworks="both")

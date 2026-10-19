@@ -59,6 +59,31 @@ not one worth faking.
    interpreted — `README.md` for behaviour and limits, `PLAN.md`/`VISION.md`
    only when the direction genuinely changes.
 
+## The documents under `isms/`
+
+Written once here so each folder's README can stay about its own subject. These
+are the conventions the repository already follows; `compliator init` writes new
+documents to match them.
+
+- **Markdown, with narrow front matter.** A few keys that something actually
+  reads. Structured metadata only where a machine needs it.
+- **One file per policy, one per risk.** Reviews then show up as a readable diff
+  against a single document.
+- **Stable ids.** `SCOPE-001`, `POL-001`, `RISK-001`, `SOA-001`; controls use
+  their own scheme (`soc2-cc8.1`). An id is permanent: the trace from a policy to
+  the evidence that proves it runs through ids, so renaming one breaks history.
+  Numbering encodes sequence, not importance — see
+  [`isms/policies/README.md`](isms/policies/README.md).
+- **Every document has a named owner and a review date.** An unattributed
+  document is not evidence of anything.
+- **`status:` is honest.** `draft` means nobody has approved it. Agents draft and
+  propose; a named human approves ([`VISION.md`](VISION.md), principle 5).
+- **No copyrighted standard text.** Reference requirements by identifier
+  (`A.8.32`, `CC8.1`) with your own one-line summary. Never paste Annex A or TSC
+  text into this repository.
+- **Manual forms live in [`manual/`](manual/), not in `isms/`.** A policy is the
+  rule; a signed form is evidence the rule was followed.
+
 ## Design constraints to respect
 
 These are load-bearing, and tests assert several of them:

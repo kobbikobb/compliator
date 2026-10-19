@@ -287,7 +287,7 @@ def _plan_interactively(ask: Ask, pending: set[str]) -> _Plan:
     )
 
     # Policies 1-2 come before the risks, which come before the SoA, which comes
-    # before the rest of the policies (README, "Order to populate").
+    # before the rest of the policies - the dependency order README.md describes.
     policies: list[Policy] = []
     for policy in POLICIES:
         if policy.path not in pending:
@@ -435,17 +435,25 @@ def _emit(target: Path, path: str, contents: str, dry_run: bool, result: Result)
     result.created.append(path)
 
 
-def _print_next_steps(result: Result, remaining: Sequence[str]) -> None:
+def _print_next_steps(result: Result, remaining: Sequence[str], required_soa: set[str]) -> None:
     print()
     if result.created:
         print(f"{len(result.created)} document(s) written as drafts.")
     if result.skipped:
         print(f"{len(result.skipped)} left alone because they already exist.")
-    if remaining:
-        shown = ", ".join(remaining[:3])
-        more = f" and {len(remaining) - 3} more" if len(remaining) > 3 else ""
-        print(f"{len(remaining)} not created (not selected): {shown}{more}")
+
+    # A statement of applicability no declared framework asks for is not a
+    # document waiting to be written - saying "not selected" about it reads as if
+    # a TODO were outstanding.
+    inapplicable = [path for path in remaining if path.startswith("isms/soa.") and path not in required_soa]
+    left_out = [path for path in remaining if path not in inapplicable]
+    if left_out:
+        shown = ", ".join(left_out[:3])
+        more = f" and {len(left_out) - 3} more" if len(left_out) > 3 else ""
+        print(f"{len(left_out)} not created (not selected): {shown}{more}")
         print("  They are still offered next time - nothing was written for them.")
+    if inapplicable:
+        print("No statement of applicability: the declared framework(s) do not require one.")
 
     print()
     print("Next:")
@@ -500,6 +508,7 @@ def run(
 
     stamp = today or _date.today().isoformat()
 
+    required_soa = {framework.soa_path for framework in plan.frameworks if framework.soa_path}
     files = _contents(plan, stamp)
     result = Result()
     wanted = set(files)
@@ -512,7 +521,7 @@ def run(
             print("Nothing to write: everything selected is already present.")
         else:
             print("Nothing selected, so nothing was written.")
-        _print_next_steps(result, remaining)
+        _print_next_steps(result, remaining, required_soa)
         return 0
 
     print()
@@ -521,7 +530,7 @@ def run(
         if path in pending:
             _emit(target, path, files[path], dry_run, result)
 
-    _print_next_steps(result, remaining)
+    _print_next_steps(result, remaining, required_soa)
     return 0
 
 
