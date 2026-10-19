@@ -16,6 +16,7 @@ python3 -m pip install -r requirements.txt          # PyYAML - the only dependen
 
 PYTHONPATH=src python3 -m compliator init --dry-run # what would this instance need?
 PYTHONPATH=src python3 -m compliator init           # write the skeletons, one document at a time
+PYTHONPATH=src python3 -m compliator status         # is any of it still true?
 make demo                                           # collect + verify against the synthetic fixtures
 ```
 
@@ -25,6 +26,12 @@ matter, the headings, and a `TODO` wherever a fact about your organisation
 belongs. It never overwrites a file, and never sets `status: approved`: a named
 human approves. Flags, exit codes and the `--answers` file are in
 [`ENGINE.md`](ENGINE.md).
+
+`status` reads the result back and reports whether it is still true: unfilled
+`TODO`s, a document claiming `approved` with nobody behind it, reviews overdue
+against their own cadence, a policy citing a control that does not exist, and per
+control whether the evidence exists, passed, is current, and still verifies.
+Read-only, and exit `1` when it finds something, so it can gate CI.
 
 ## Two halves, and you only need one to start
 
@@ -129,8 +136,9 @@ Honest list, with detail in [`PLAN.md`](PLAN.md).
 - **A passing check is not a working control.** One control may need several
   checks, and no check can demonstrate that an organizational control is effective.
 - **Empty versus absent is unresolved** — a tracked open question, not a solved one.
-- **`init` writes drafts, not finished documents.** It reports whether a document
-  is present, not whether its `TODO`s are gone or its ratings are honest.
+- **`init` writes drafts, and `status` only checks what a file can show.** It
+  reads `TODO` markers, front matter and record hashes; it cannot tell whether a
+  rating is honest or whether prose means what it says.
 - **Attestations are not cryptographically signed**, and there is no retention,
   immutability, access control, scheduling, or remediation workflow.
 - **Not reviewed by a compliance professional or auditor.**

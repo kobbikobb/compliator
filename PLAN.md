@@ -12,7 +12,8 @@ personal GitHub account with a clean history.
 
 Existing work kept: the evidence-verification engine in `src/compliator/` (config
 loader, evaluator, packager, verifier, thin fixture plugins, 7 example controls,
-49 tests, synthetic fixtures). Nothing in it is being rewritten; the verifier now
+49 tests at the time, synthetic fixtures). Nothing in it is being rewritten; the
+verifier now
 enforces the schema ids a record declares and reports engine-version skew, so a
 record can no longer store a checkout-specific verification command.
 
@@ -65,7 +66,11 @@ for this document set, reports what is missing, and offers each document in turn
 writing the skeletons (front matter, headings, and a `TODO` per fact it does not
 know). It deliberately stops at skeletons — no policy statement, risk rating or
 applicability decision is ever invented — and it never overwrites a file or sets
-`status: approved`. See [`ENGINE.md`](ENGINE.md).
+`status: approved`. `compliator status` then reads the result back: unfinished
+`TODO`s, an `approved` document with nobody behind it, a review overdue against
+its own cadence, a policy citing a control that does not exist, and per control
+whether the evidence exists, passed, is current and still verifies. See
+[`ENGINE.md`](ENGINE.md).
 
 ## Milestone 4 — One end-to-end verification slice
 
@@ -133,8 +138,10 @@ relevant milestone needs them:
   Source: <https://docs.coderabbit.ai/management/plans>.
 - No retention, immutability, access control, scheduling, or remediation
   workflow — by design, for now.
-- `compliator init` reports whether a document is **present**, not whether it is
-  finished. Nothing yet checks that the `TODO`s are gone, that front matter
-  ratings are honest, or that a policy links to a control that exists — so an
-  instance can be scaffolded, look complete in the scan, and still be a draft
-  nobody has read. A document-completeness check is the obvious next slice.
+- `compliator init` reports whether a document is **present**; `compliator status`
+  reads back whether it is finished — `TODO`s gone, `approved` backed by an
+  `approved_by`, reviews inside their cadence, policy-to-control links that
+  resolve, and evidence that is current and verifies. What neither can do is judge
+  content: whether a rating is honest, or whether the prose means what it says,
+  still needs a human. A traceability report across the whole framework mapping is
+  the obvious next slice.
