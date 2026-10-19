@@ -188,11 +188,24 @@ def check_documents(instance: Path, control_ids: set[str], today: date) -> tuple
             if status == "approved":
                 findings.append(Finding("warning", subject, "approved but no `last_reviewed` - nobody recorded a review"))
         elif days is not None:
-            try:
-                when = reviewed if isinstance(reviewed, date) else date.fromisoformat(str(reviewed))
-            except ValueError:
-                findings.append(Finding("error", subject, f"`last_reviewed` is not a date: {reviewed!r}"))
+            when: date | None = None
+            if isinstance(reviewed, datetime):
+                when = reviewed.date()
+            elif isinstance(reviewed, date):
+                when = reviewed
             else:
+                try:
+                    when = date.fromisoformat(str(reviewed))
+                except ValueError:
+                    # A date with a time is still a date. YAML only turns one into
+                    # a datetime when it is unquoted, so this path catches the
+                    # quoted spelling too, rather than erroring on a formatting
+                    # difference the author cannot see.
+                    try:
+                        when = datetime.fromisoformat(str(reviewed)).date()
+                    except ValueError:
+                        findings.append(Finding("error", subject, f"`last_reviewed` is not a date: {reviewed!r}"))
+            if when is not None:
                 age = (today - when).days
                 if age < 0:
                     findings.append(Finding("warning", subject, f"`last_reviewed` is in the future ({when.isoformat()})"))
@@ -248,9 +261,19 @@ def check_evidence(
         record_dir = control_dir / str(collection)
         if collection and record_dir.is_dir():
             try:
-                verify_record(record_dir)
+                verified = verify_record(record_dir)
             except VerificationError as exc:
                 findings.append(Finding("error", subject, f"latest record fails verification: {exc}"))
+            else:
+                # `result` above comes from LATEST.json, which is outside the
+                # hashed record and can be rewritten by anyone with write access.
+                # The record is the thing the hashes cover, so it gets the last
+                # word: a pointer saying "pass" over a record saying otherwise is
+                # exactly the edit this tool exists to catch.
+                if verified.get("result") != result:
+                    findings.append(
+                        Finding("error", subject, f"LATEST.json says {result!r} but the record says {verified.get('result')!r}")
+                    )
         else:
             findings.append(Finding("warning", subject, "LATEST.json points at a record that is not there"))
 
@@ -331,9 +354,23 @@ def run(
 
     controls: list[Any] = []
     note = None
+    config_finding: Finding | None = None
     try:
         project = load_project(config_path)
     except ConfigError as exc:
+        # A documents-only instance is legitimate - README says you only need one
+        # half to start - so a *missing* config is a warning. A config that is
+        # there and will not load is broken, and an explicitly requested one that
+        # is not there is a typo. Neither may be quiet, because when this fails
+        # the evidence half goes unexamined: a skipped half reported as "no
+        # findings" would be the exact false assurance this tool exists to
+        # prevent, so it is a finding at its own level, and never a header note.
+        level = "error" if config_path.exists() or config_dir is not None else "warning"
+        config_finding = Finding(
+            level,
+            "config",
+            f"no control configuration at {config_path} ({exc}) - the evidence half was not checked",
+        )
         note = f"No control configuration at {config_path} ({exc}). Only the documents were checked."
     else:
         controls = list(project.controls)
@@ -342,6 +379,8 @@ def run(
     documents, document_findings = check_documents(target, {control.id for control in controls}, today)
     findings.extend(document_findings)
     findings.extend(check_evidence(target, evidence_root, controls, today))
+    if config_finding is not None:
+        findings.append(config_finding)
 
     _print_report(target, documents, findings, out, note)
     return 1 if any(finding.level in ("error", "warning") for finding in findings) else 0

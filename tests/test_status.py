@@ -103,11 +103,23 @@ class TestStatus(unittest.TestCase):
         self.assertIn("0 error(s)", out)
 
     def test_status_writes_nothing(self):
-        self._scaffold(organization="Acme", policies="minimal")
+        # Config and evidence are both wired up here on purpose: this is the only
+        # test behind the "read-only" claim, so it has to reach the paths that
+        # could write - the verifier and the evidence scan - not just the doc scan.
+        self._clean_instance()
+        evidence_root = self.instance / "evidence"
+        self._collect_into(evidence_root)
         before = {str(path): path.stat().st_mtime_ns for path in self.instance.rglob("*")}
 
-        self._status()
+        # No --as-of, so the evidence is aged against the day it was collected.
+        code = run(
+            self.instance,
+            config_dir=ROOT / "config",
+            evidence_dir=evidence_root,
+            out=io.StringIO(),
+        )
 
+        self.assertEqual(code, 0)
         after = {str(path): path.stat().st_mtime_ns for path in self.instance.rglob("*")}
         self.assertEqual(before, after)
 
@@ -159,13 +171,16 @@ class TestStatus(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("review overdue", out)
 
-    def test_review_inside_the_cadence_is_clean(self):
+    def test_review_inside_the_cadence_is_not_reported(self):
         self._clean_instance()
 
         code, out = self._status(as_of="2026-10-19")
 
-        self.assertEqual(code, 0)
-        self.assertIn("0 warning(s)", out)
+        # One warning: this instance has no control configuration, so the evidence
+        # half is unchecked. Nothing about the review itself.
+        self.assertEqual(code, 1)
+        self.assertIn("0 error(s), 1 warning(s)", out)
+        self.assertNotIn("review overdue", out)
 
     def test_citing_a_control_that_does_not_exist_is_an_error(self):
         self._clean_instance({"controls": ["soc2-cc9.9"]})
@@ -181,8 +196,9 @@ class TestStatus(unittest.TestCase):
 
         code, out = self._status()
 
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 1)  # the missing config, not the prose
         self.assertIn("draft, no TODOs left", out)
+        self.assertNotIn("unfinished", out)
 
     # -- evidence findings ---------------------------------------------------
 
@@ -228,6 +244,71 @@ class TestStatus(unittest.TestCase):
 
         self.assertEqual(code, 1)
         self.assertIn("no evidence collected yet", out)
+
+    def test_a_config_that_will_not_load_is_never_a_silent_pass(self):
+        # The evidence half cannot be checked without controls. A skipped half
+        # must not read as "no findings", so an unloadable config is a finding.
+        self._clean_instance()
+        controls = self.instance / "config" / "controls"
+        controls.mkdir(parents=True)
+        (controls / "broken.yaml").write_text("id: [unclosed\n", encoding="utf-8")
+
+        code, out = self._status()
+
+        self.assertEqual(code, 1)
+        self.assertIn("config", out)
+        self.assertIn("the evidence half was not checked", out)
+
+    def test_a_missing_evidence_half_is_a_warning_not_a_clean_run(self):
+        self._clean_instance()
+
+        code, out = self._status()  # no config anywhere: documents-only instance
+
+        self.assertEqual(code, 1)
+        self.assertIn("the evidence half was not checked", out)
+
+    def test_latest_json_is_not_taken_at_face_value(self):
+        self._clean_instance()
+        evidence_root = self.instance / "evidence"
+        self._collect_into(evidence_root)
+        latest = next(evidence_root.glob("*/LATEST.json"))
+        document = json.loads(latest.read_text(encoding="utf-8"))
+        document["result"] = "pass" if document["result"] != "pass" else "fail"
+        latest.write_text(json.dumps(document), encoding="utf-8")
+
+        code, out = self._status(config_dir=ROOT / "config", evidence_dir=evidence_root)
+
+        self.assertEqual(code, 1)
+        self.assertIn("LATEST.json says", out)
+        self.assertIn("but the record says", out)
+
+    def test_a_review_date_with_a_time_is_not_a_crash(self):
+        # Unquoted, YAML turns `2026-09-01 10:00:00` into a datetime, which is a
+        # subclass of date - so `today - when` raises TypeError and kills the
+        # report. Quoted, it stays a string and has to be parsed here.
+        self._clean_instance()
+        policy = self.instance / "isms/policies/POL-001-information-security.md"
+        policy.write_text(
+            "---\n"
+            "id: POL-001\n"
+            "title: Information Security Policy\n"
+            "owner: founder@example.invalid\n"
+            "status: draft\n"
+            "review_cadence: annual\n"
+            "last_reviewed: 2026-09-01 10:00:00\n"
+            "---\n\nNothing to finish here.\n",
+            encoding="utf-8",
+        )
+        self._document(
+            "isms/policies/POL-002-risk-management.md",
+            {"id": "POL-002", "title": "Risk Management", **self._common_front(last_reviewed="2026-09-01 10:00:00")},
+        )
+
+        code, out = self._status()
+
+        self.assertEqual(code, 1)  # the missing config; the point is the report ran
+        self.assertNotIn("is not a date", out)
+        self.assertIn("0 error(s)", out)
 
     # -- wiring --------------------------------------------------------------
 
