@@ -30,6 +30,7 @@ PYTHONPATH=src python3 -m compliator list             # configured controls and 
 PYTHONPATH=src python3 -m compliator collect          # collect everything (synthetic fixtures)
 PYTHONPATH=src python3 -m compliator verify evidence  # re-verify every record's hashes
 PYTHONPATH=src python3 -m compliator init             # scaffold the ISMS documents, one at a time
+PYTHONPATH=src python3 -m compliator status           # is what exists still true?
 PYTHONPATH=src python3 -m unittest discover -s tests  # the test suite
 ```
 
@@ -90,9 +91,53 @@ Exit codes: `0` wrote what you asked (or there was nothing to do) · `2` refused
 unreadable answers file, unknown framework, a non-interactive run with no
 answers, or no terminal to ask on.
 
+## Is it still true?
+
+`init` answers "are we set up?" by counting files. `status` answers the harder
+question — is what exists still true — and it is the command to run in a daily or
+CI check:
+
+```bash
+PYTHONPATH=src python3 -m compliator status                    # this repository, today
+PYTHONPATH=src python3 -m compliator status --target ../acme   # another instance
+PYTHONPATH=src python3 -m compliator status --as-of 2027-01-01 # age against a given date
+PYTHONPATH=src python3 -m compliator status --config-dir config --evidence-dir evidence
+```
+
+It reads two halves and reports findings under three levels:
+
+- **Documents** — front matter that is missing, unparseable, or has no `owner`;
+  a document claiming `status: approved` with no `approved_by`; `approved` with
+  `TODO`s still in it (unfinished work presented as done); a review overdue
+  against the document's own `review_cadence`; no scope statement, no policies,
+  or no risks recorded at all; and any `controls:` reference that no control in
+  `config/controls/` defines, because a broken trace is the one thing a
+  compliance repository cannot afford.
+- **Evidence** — per control: whether a record exists, whether its latest result
+  passed, whether it has aged past the control's `frequency_days`, and whether
+  the record still verifies (hashes re-checked, so a hand-edited record is an
+  error, not a passing check).
+
+Levels are **error** (a claim contradicted by the files), **warning** (a
+judgement call, and normal in a young instance), and **note** (worth knowing;
+does not affect the exit code). Exit codes: `0` nothing to report · `1` errors
+or warnings (a note-only run is `0`) · `2` could not run.
+
+The evidence half shares one honesty rule with the engine: a check that did not
+run is never a pass. If the control configuration cannot be loaded there are no
+controls to check against, so that is itself a finding — a *missing* config is a
+warning, because a documents-only instance is a legitimate way to start, while a
+config that is there and will not parse (or one you asked for by name that is not
+there) is an error. `LATEST.json` is likewise not taken at face value: it sits
+outside the hashed record, so the record gets the last word on its own result.
+
+It is read-only by construction: it writes nothing, fixes nothing, and has no
+option that could change an instance. A scaffolded instance exits `1` on purpose
+— the `TODO`s are the work.
+
 ## Try the failure paths
 
-Both are the point of the project, so they are worth a minute:
+The failure paths are the point of the project, so they are worth a minute:
 
 ```bash
 # a source that cannot be collected: loud, exit 2, no record written
@@ -101,6 +146,9 @@ PYTHONPATH=src python3 -m compliator collect --simulate-failure github_org
 # a failing control: record written, exit 1
 #   edit fixtures/github_org.json and set "push_protection": false on any repo
 PYTHONPATH=src python3 -m compliator collect
+
+# evidence that has aged out: exit 1, naming the control and the cadence
+PYTHONPATH=src python3 -m compliator status --as-of 2027-01-01
 ```
 
 ## What the engine produces
