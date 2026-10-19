@@ -25,7 +25,7 @@ variables or a secret store) and are never committed — see
 ## Install and run
 
 ```bash
-make install   # PyYAML, the one runtime dependency
+make install   # creates .venv and installs PyYAML into it
 make help      # every target, one line each
 
 make list      # configured controls and their checks
@@ -36,7 +36,10 @@ make test      # the test suite
 ```
 
 There is no install step for the engine itself — the package is imported from
-`src/`, and the Makefile carries `PYTHONPATH=src` for you.
+`src/`, and the Makefile carries `PYTHONPATH=src` for you. Targets use `.venv/`
+when it exists and the system `python3` otherwise; `.venv` is what keeps the
+install working on systems where pip refuses to touch the system Python
+(PEP 668).
 
 You should see 7 passing controls, 7 verified records, and a green test suite. If
 not, fix that before writing your own controls — nothing below means anything if
