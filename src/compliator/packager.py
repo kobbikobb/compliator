@@ -7,7 +7,7 @@ An auditor is being asked to trust the evidence this module emits. So the
 rules here are deliberately boring and explicit:
 
   1. RAW COPY IS KEPT. Every record ships the exact bytes the plugin pulled
-     (canonicalised JSON only - no field is added, removed or interpreted).
+     (deterministic JSON only - no field is added, removed or interpreted).
      A pass/fail summary is worthless without the population underneath it.
   2. EVERYTHING IS HASHED. The record's MANIFEST.json lists a SHA-256 for
      every file, and evidence.json binds the raw payload hash. Anyone can
@@ -23,7 +23,7 @@ rules here are deliberately boring and explicit:
      in already-resolved, with observed values recorded. This module judges
      nothing; it records, hashes and packages.
 
-Review checklist for a human: canonicalisation, hash coverage, the
+Review checklist for a human: deterministic serialisation, hash coverage, the
 LATEST-pointer update rule (only on success), and the absence of any
 try/except that could turn a failure into an empty record.
 """
@@ -44,8 +44,8 @@ EVIDENCE_SCHEMA = "compliator/evidence-record/v1"
 MANIFEST_SCHEMA = "compliator/evidence-manifest/v1"
 
 
-def canonical_json(obj: Any) -> str:
-    """Canonical serialisation: sorted keys, fixed indent, trailing newline.
+def deterministic_json(obj: Any) -> str:
+    """Deterministic serialisation: sorted keys, fixed indent, trailing newline.
 
     Deterministic bytes are a precondition for meaningful hashing: any
     reordering or whitespace drift would make the hash useless as an
@@ -98,7 +98,7 @@ def write_record(
 
     raw_rel = f"raw/{source_name}.json"
     raw_path = record_dir / raw_rel
-    raw_text = canonical_json(raw)
+    raw_text = deterministic_json(raw)
     raw_path.write_text(raw_text, encoding="utf-8")
     raw_sha = sha256_bytes(raw_text.encode("utf-8"))
 
@@ -134,7 +134,7 @@ def write_record(
         "result": result,
     }
     evidence_path = record_dir / "evidence.json"
-    evidence_path.write_text(canonical_json(record), encoding="utf-8")
+    evidence_path.write_text(deterministic_json(record), encoding="utf-8")
 
     # No "how to verify" command string is stored. It would be a command line
     # tied to one checkout layout, sitting inside a hashed artifact, going stale
@@ -150,7 +150,7 @@ def write_record(
         },
     }
     manifest_path = record_dir / "MANIFEST.json"
-    manifest_path.write_text(canonical_json(manifest), encoding="utf-8")
+    manifest_path.write_text(deterministic_json(manifest), encoding="utf-8")
 
     latest = {
         "collection_id": cid,
@@ -159,5 +159,5 @@ def write_record(
         "evidence_sha256": manifest["files"]["evidence.json"],
         "manifest_sha256": sha256_file(manifest_path),
     }
-    (control_dir / "LATEST.json").write_text(canonical_json(latest), encoding="utf-8")
+    (control_dir / "LATEST.json").write_text(deterministic_json(latest), encoding="utf-8")
     return record_dir, result

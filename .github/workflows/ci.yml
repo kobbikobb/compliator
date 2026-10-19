@@ -31,5 +31,7 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Unit tests
         run: make test
+      - name: Banned vocabulary (scripts/slop-words.txt)
+        run: make check-words
       - name: End-to-end smoke (collect, then verify every record)
         run: make demo

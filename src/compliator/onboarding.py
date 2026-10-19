@@ -178,7 +178,7 @@ def _resolve_policies(value: Any) -> tuple[Policy, ...]:
 
 
 def _front_matter(fields: dict[str, Any]) -> str:
-    """Canonical YAML front matter. Omitted keys stay omitted - on purpose."""
+    """Deterministic YAML front matter. Omitted keys stay omitted - on purpose."""
     body = yaml.safe_dump(fields, sort_keys=False, allow_unicode=True, default_flow_style=False)
     return f"---\n{body}---\n"
 
