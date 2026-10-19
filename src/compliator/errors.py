@@ -36,3 +36,14 @@ class EmptyPopulationError(CompliatorError):
 
 class VerificationError(CompliatorError):
     """Evidence record failed hash/integrity verification."""
+
+
+class OnboardingError(CompliatorError):
+    """The scaffolding run could not proceed as asked.
+
+    Raised when: the answers file is missing, unreadable or has an unknown key,
+    a framework or policy selection is not recognised, or an interactive run was
+    requested with no terminal and no answers. It is never raised for a choice
+    the user is entitled to make - declining every document is an answer, not a
+    failure.
+    """

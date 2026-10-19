@@ -71,8 +71,21 @@ the direction, including the parts that are explicitly *not* built.
 
 ## Getting started
 
-Start with the ISMS documents. No installation, no commands — they are Markdown
-files you edit and commit.
+Start with the ISMS documents. They are Markdown files you edit and commit — no
+installation, no commands needed. If you would rather not start from a blank
+file, the engine will write the skeletons for you:
+
+```bash
+PYTHONPATH=src python3 -m compliator init --dry-run   # print the plan, write nothing
+PYTHONPATH=src python3 -m compliator init             # ask one document at a time
+```
+
+It scans for the documents an ISMS needs, says which are missing, and offers each
+one in turn. What it writes is a **skeleton**: the right location, correct front
+matter, the headings, and a `TODO` wherever a fact about your organisation
+belongs. It never overwrites a file that exists, and it never fills
+`approved_by` — a named human approves. Details and the non-interactive
+`--answers` path are in [`ENGINE.md`](ENGINE.md).
 
 ### Order to populate
 
