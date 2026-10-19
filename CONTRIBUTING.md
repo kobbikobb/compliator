@@ -25,15 +25,16 @@ than large ones, and there is no roadmap obligation implied by opening an issue.
 ## Development
 
 ```bash
-python3 -m pip install -r requirements.txt
-PYTHONPATH=src python3 -m unittest discover -s tests -v
-PYTHONPATH=src python3 -m compliator collect          # runs against the synthetic fixtures
-PYTHONPATH=src python3 -m compliator verify evidence
+make install   # the one runtime dependency (PyYAML)
+make test      # unit test suite
+make demo      # collect from the synthetic fixtures, then verify every record
 ```
 
-The engine is imported from `src/`, not installed, so `PYTHONPATH=src` is the
-whole setup. `make demo`, `make test`, `make status`, `make clean` wrap the same
-commands.
+Plain `make` lists every target with a one-line description — nothing here
+needs copying out of this file.
+
+The engine is imported from `src/`, not installed, so the Makefile carries
+`PYTHONPATH=src` for you.
 
 Every push to `main` and every pull request runs those commands in GitHub Actions
 across Python 3.9, 3.13 and 3.14 (`.github/workflows/ci.yml`) — unit tests, then

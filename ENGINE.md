@@ -25,19 +25,18 @@ variables or a secret store) and are never committed — see
 ## Install and run
 
 ```bash
-python3 -m pip install -r requirements.txt   # PyYAML
+make install   # PyYAML, the one runtime dependency
+make help      # every target, one line each
 
-PYTHONPATH=src python3 -m compliator list             # configured controls and their checks
-PYTHONPATH=src python3 -m compliator collect          # collect everything (synthetic fixtures)
-PYTHONPATH=src python3 -m compliator verify evidence  # re-verify every record's hashes
-PYTHONPATH=src python3 -m compliator init             # scaffold the ISMS documents, one at a time
-PYTHONPATH=src python3 -m compliator status           # is what exists still true?
-PYTHONPATH=src python3 -m unittest discover -s tests  # the test suite
+make list      # configured controls and their checks
+make demo      # collect from the synthetic fixtures, then verify every record
+make status    # is what exists still true?
+make init      # scaffold the ISMS documents, one at a time
+make test      # the test suite
 ```
 
 There is no install step for the engine itself — the package is imported from
-`src/`, so putting `src` on `PYTHONPATH` is the whole setup. `make demo`,
-`make test`, and `make clean` from the repository root do the same thing.
+`src/`, and the Makefile carries `PYTHONPATH=src` for you.
 
 You should see 7 passing controls, 7 verified records, and a green test suite. If
 not, fix that before writing your own controls — nothing below means anything if
