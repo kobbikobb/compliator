@@ -34,6 +34,23 @@ Every push to `main` and every pull request runs those commands in GitHub Action
 across Python 3.9, 3.13 and 3.14 (`.github/workflows/ci.yml`) — unit tests, then
 the end-to-end collect-and-verify. Nothing is merged on local green alone.
 
+## Reviews
+
+Review comments are advisory: a named human approves documents
+([`VISION.md`](VISION.md), principle 5). [`.coderabbit.yaml`](.coderabbit.yaml)
+encodes this repository's own rules for the reviewer — read it before arguing
+with a comment, because a comment citing "an empty population is an error" is a
+constraint from this project, not a taste preference. The configuration leaves
+CodeRabbit's request-changes workflow off, so it comments rather than gating the
+branch; an explicit `@coderabbitai approve` command exists, but approving a
+pull request stays a human action here.
+
+The repository is public and below CodeRabbit's automatic-review threshold (10
+stars), so nothing reviews a pull request on its own. Someone comments
+`@coderabbitai review` on it. The configuration is written for the day the
+repository passes that threshold; the star count is the only lever, and it is
+not one worth faking.
+
 ## What a change should include
 
 1. A brief explanation of the problem, in the pull request description.
