@@ -1,4 +1,4 @@
-.PHONY: demo collect verify test list clean
+.PHONY: demo collect verify test list status clean
 
 # The engine is imported from src/, not installed, so it needs src on the path.
 PYTHONPATH := src
@@ -16,6 +16,12 @@ test:
 
 list:
 	PYTHONPATH=$(PYTHONPATH) python3 -m compliator list
+
+# Reports on the repository's own documents and evidence. Exits 1 when it has
+# findings, so it is not part of `make demo` - a young instance is meant to have
+# them.
+status:
+	PYTHONPATH=$(PYTHONPATH) python3 -m compliator status
 
 # remove generated records but keep the tracked .gitkeep: `rm -rf evidence`
 # would delete a version-controlled file along with the output

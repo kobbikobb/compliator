@@ -8,6 +8,7 @@ Commands:
     verify    re-verify hashes of an evidence record (or a whole evidence root)
     list      list configured controls and their checks
     init      scaffold an instance's ISMS documents, one item at a time
+    status    report whether the documents and the evidence are still true
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ from .config import load_project
 from .engine import collect
 from .errors import CompliatorError
 from .onboarding import run as run_init
+from .status import run as run_status
 from .verify import verify_all, verify_record
 
 
@@ -58,6 +60,12 @@ def _build_parser() -> argparse.ArgumentParser:
         "--dry-run", action="store_true",
         help="print what would be written, ask nothing, write nothing",
     )
+
+    p_status = sub.add_parser("status", help="report on the documents and the evidence (read-only)")
+    p_status.add_argument("--target", default=".", help="instance root to inspect (default: .)")
+    p_status.add_argument("--config-dir", default=None, help="control config directory (default: <target>/config)")
+    p_status.add_argument("--evidence-dir", default=None, help="evidence root (default: <target>/evidence)")
+    p_status.add_argument("--as-of", default=None, metavar="YYYY-MM-DD", help="date to age reviews and evidence against")
 
     return parser
 
@@ -123,6 +131,13 @@ def main(argv: list[str] | None = None) -> int:
                 Path(args.target),
                 answers_path=Path(args.answers) if args.answers else None,
                 dry_run=args.dry_run,
+            )
+        if args.command == "status":
+            return run_status(
+                Path(args.target),
+                config_dir=Path(args.config_dir) if args.config_dir else None,
+                evidence_dir=Path(args.evidence_dir) if args.evidence_dir else None,
+                as_of=args.as_of,
             )
     except CompliatorError as exc:
         print(f"error: {exc}", file=sys.stderr)
