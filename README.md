@@ -11,7 +11,7 @@ anyone can re-derive a verdict from a record without running this application.
 ## Try it
 
 ```bash
-make install   # PyYAML, the one runtime dependency
+make install   # create .venv and install PyYAML into it
 make           # list every target with a one-line description
 
 make init      # scaffold the ISMS documents, one at a time
