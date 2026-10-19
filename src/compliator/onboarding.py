@@ -287,7 +287,7 @@ def _plan_interactively(ask: Ask, pending: set[str]) -> _Plan:
     )
 
     # Policies 1-2 come before the risks, which come before the SoA, which comes
-    # before the rest of the policies (README, "Order to populate").
+    # before the rest of the policies - the dependency order README.md describes.
     policies: list[Policy] = []
     for policy in POLICIES:
         if policy.path not in pending:
