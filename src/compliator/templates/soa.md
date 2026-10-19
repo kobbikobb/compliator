@@ -25,17 +25,19 @@ TODO: replace the single example row with one row per control in the framework.
 Rows are decisions; add them as you make them rather than filling the table in
 bulk.
 
-| Requirement | Applies? | Justification | Implementation | Our control(s) |
-| --- | --- | --- | --- | --- |
-| TODO | TODO | TODO | `not_implemented` | — |
+| Requirement | Applies | Justification | Status | Our control | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| TODO | TODO | TODO | `not_implemented` | — | — |
+
+Status values: `implemented` · `partial` · `not_implemented` · `not_applicable`.
 
 ## Exclusions
 
 TODO: anything you decided does not apply, and why. This is the section an
 auditor samples hardest.
 
-## Changes since last review
+## Revision history
 
-| Date | Change | Why |
+| Date | Change | By |
 | --- | --- | --- |
 | $date | created from the template by `compliator init` | |
