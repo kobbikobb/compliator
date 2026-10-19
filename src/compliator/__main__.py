@@ -7,6 +7,7 @@ Commands:
     collect   run the collection engine over configured controls
     verify    re-verify hashes of an evidence record (or a whole evidence root)
     list      list configured controls and their checks
+    init      scaffold an instance's ISMS documents, one item at a time
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from . import __version__
 from .config import load_project
 from .engine import collect
 from .errors import CompliatorError
+from .onboarding import run as run_init
 from .verify import verify_all, verify_record
 
 
@@ -45,6 +47,17 @@ def _build_parser() -> argparse.ArgumentParser:
 
     p_list = sub.add_parser("list", help="list configured controls")
     p_list.add_argument("--config-dir", default="config")
+
+    p_init = sub.add_parser("init", help="scaffold the ISMS documents for an instance")
+    p_init.add_argument("--target", default=".", help="instance root to scan and write into (default: .)")
+    p_init.add_argument(
+        "--answers", default=None, metavar="FILE",
+        help="YAML file answering every question; runs entirely non-interactively",
+    )
+    p_init.add_argument(
+        "--dry-run", action="store_true",
+        help="print what would be written, ask nothing, write nothing",
+    )
 
     return parser
 
@@ -105,6 +118,12 @@ def main(argv: list[str] | None = None) -> int:
             return _cmd_verify(args)
         if args.command == "list":
             return _cmd_list(args)
+        if args.command == "init":
+            return run_init(
+                Path(args.target),
+                answers_path=Path(args.answers) if args.answers else None,
+                dry_run=args.dry_run,
+            )
     except CompliatorError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

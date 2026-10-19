@@ -29,6 +29,7 @@ python3 -m pip install -r requirements.txt   # PyYAML
 PYTHONPATH=src python3 -m compliator list             # configured controls and their checks
 PYTHONPATH=src python3 -m compliator collect          # collect everything (synthetic fixtures)
 PYTHONPATH=src python3 -m compliator verify evidence  # re-verify every record's hashes
+PYTHONPATH=src python3 -m compliator init             # scaffold the ISMS documents, one at a time
 PYTHONPATH=src python3 -m unittest discover -s tests  # the test suite
 ```
 
@@ -52,6 +53,42 @@ PYTHONPATH=src python3 -m compliator verify evidence/soc2-cc8.1/<collection-id>
 Exit codes: `0` all passing · `1` a control failed its checks (findings-grade
 evidence, still written) · `2` a collection error (nothing written for that
 control).
+
+## Scaffolding a new instance
+
+The other half of the repository — the ISMS documents — can be started from
+nothing, so a new instance is not a blank page:
+
+```bash
+PYTHONPATH=src python3 -m compliator init                    # one document at a time
+PYTHONPATH=src python3 -m compliator init --dry-run          # print the plan, write nothing
+PYTHONPATH=src python3 -m compliator init --answers a.yaml   # non-interactive, for CI or a script
+PYTHONPATH=src python3 -m compliator init --target ../acme   # some other instance root
+```
+
+`init` scans the target for the documents an ISMS needs, prints which are present
+and which are missing — that report is also the answer to "are we set up yet?" —
+and then offers each missing one with a single question. Declining everything is
+a valid answer and not an error.
+
+Three rules it holds to:
+
+- **Skeletons, not content.** Correct location, correct front matter, the
+  headings, and a `TODO` wherever a fact about your organisation belongs. It
+  never invents a policy statement, a risk rating, or an applicability decision.
+- **Never overwrites.** A file that exists is reported and left alone. There is
+  no force flag.
+- **Never approves.** `approved_by` is omitted and `status` is `draft` (or `open`
+  for a risk). Only a named human approves a document — VISION.md, principle 5.
+
+The answers file takes `organization`, `what_it_does`, `owner`, `frameworks`
+(`iso_27001_2022`, `soc2`, `both`, `none`), `policies` (`minimal`, `all`, `none`,
+or a list of numbers), `risk_title`, and a `create` map to veto individual items.
+Unknown keys are an error rather than a typo that quietly does nothing.
+
+Exit codes: `0` wrote what you asked (or there was nothing to do) · `2` refused:
+unreadable answers file, unknown framework, a non-interactive run with no
+answers, or no terminal to ask on.
 
 ## Try the failure paths
 

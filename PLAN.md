@@ -60,6 +60,13 @@ Explicitly **not** in scope: bulk-generating 93 Annex A controls, or claiming
 audit readiness from paper artifacts. Outcome: a coherent, tiny ISMS with visible
 human accountability.
 
+A new instance does not have to start from a blank page: `compliator init` scans
+for this document set, reports what is missing, and offers each document in turn,
+writing the skeletons (front matter, headings, and a `TODO` per fact it does not
+know). It deliberately stops at skeletons — no policy statement, risk rating or
+applicability decision is ever invented — and it never overwrites a file or sets
+`status: approved`. See [`ENGINE.md`](ENGINE.md).
+
 ## Milestone 4 — One end-to-end verification slice
 
 Choose one security control (for example GitHub branch protection) and verify it
@@ -122,3 +129,8 @@ relevant milestone needs them:
   external notarisation, and `LATEST.json` is trusted for staleness.
 - No retention, immutability, access control, scheduling, or remediation
   workflow — by design, for now.
+- `compliator init` reports whether a document is **present**, not whether it is
+  finished. Nothing yet checks that the `TODO`s are gone, that front matter
+  ratings are honest, or that a policy links to a control that exists — so an
+  instance can be scaffolded, look complete in the scan, and still be a draft
+  nobody has read. A document-completeness check is the obvious next slice.
