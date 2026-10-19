@@ -25,7 +25,7 @@ than large ones, and there is no roadmap obligation implied by opening an issue.
 ## Development
 
 ```bash
-make install   # the one runtime dependency (PyYAML)
+make install   # creates .venv, installs PyYAML into it
 make test      # unit test suite
 make demo      # collect from the synthetic fixtures, then verify every record
 ```
