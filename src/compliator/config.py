@@ -117,12 +117,6 @@ class Project:
     sources: dict[str, SourceDef]
     controls: list[Control]
 
-    def control_by_id(self, control_id: str) -> Control | None:
-        for control in self.controls:
-            if control.id == control_id:
-                return control
-        return None
-
 
 def _load_yaml(path: Path) -> dict[str, Any]:
     if not path.is_file():
@@ -169,7 +163,7 @@ def load_controls(config_dir: Path, sources: dict[str, SourceDef]) -> list[Contr
     controls_dir = config_dir / "controls"
     if not controls_dir.is_dir():
         raise ConfigError(f"missing controls directory: {controls_dir}")
-    paths = sorted(controls_dir.glob("*.yaml")) + sorted(controls_dir.glob("*.yml"))
+    paths = sorted(controls_dir.glob("*.yaml"))
     if not paths:
         raise ConfigError(f"no control configs found in {controls_dir}")
 

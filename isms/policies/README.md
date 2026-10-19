@@ -1,7 +1,9 @@
 # Policies
 
 One Markdown file per policy, in this directory: `POL-<NNN>-<slug>.md` from
-[`_template.md`](_template.md). Templates only — no policies exist yet.
+[`src/compliator/templates/policy.md`](../../src/compliator/templates/policy.md)
+— the same skeleton `compliator init` writes. Templates only — no policies exist
+yet.
 
 A policy is a rule you commit to. Controls (`config/controls/*.yaml`) are the
 claims that implement it, and evidence is the proof they hold.

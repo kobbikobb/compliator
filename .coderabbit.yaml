@@ -66,10 +66,10 @@ reviews:
       instructions: >
         Controls are declarative: metadata plus checks, no logic in YAML. Every
         control names a source that exists in sources.yaml and uses only the
-        documented operators (population: all_equal, none_equal, exists,
-        date_within_days, min_gte, count_gte; scalar: equals, gte, exists,
-        count_gte). Reject framework mappings presented as authoritative; they
-        are illustrative placeholders cited by identifier only.
+        documented operators (population: all_equal, exists, date_within_days,
+        min_gte, count_gte; scalar: equals, gte, exists, count_gte). Reject framework
+        mappings presented as authoritative; they are illustrative placeholders cited
+        by identifier only.
     - path: "isms/**"
       instructions: >
         Documents, not code. Outline the rules they must obey: synthetic data

@@ -27,10 +27,6 @@ def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def sha256_text(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
 def json_safe(obj: Any, path: str = "$") -> Any:
     """Normalise raw facts to JSON-native values, or refuse loudly.
 

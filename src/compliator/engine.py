@@ -22,7 +22,7 @@ from __future__ import annotations
 import json
 import sys
 import traceback
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import TextIO
@@ -30,7 +30,7 @@ from typing import TextIO
 from . import __version__
 from .config import Control, Project
 from .errors import CompliatorError, EmptyPopulationError, PluginError
-from .evaluate import CheckResult, evaluate_check
+from .evaluate import evaluate_check
 from .packager import write_record
 from .plugins import get_plugin
 
@@ -47,7 +47,6 @@ class ControlOutcome:
     error: str | None = None
     last_good: str | None = None
     last_good_age_days: int | None = None
-    details: list[CheckResult] = field(default_factory=list)
 
 
 def _read_latest(evidence_root: Path, control: Control) -> tuple[datetime | None, str | None, str | None]:
@@ -208,7 +207,6 @@ def collect(
         outcome.checks_total = len(check_results)
         outcome.checks_passed = sum(1 for r in check_results if r.passed)
         outcome.record_dir = record_dir
-        outcome.details = check_results
         outcomes.append(outcome)
 
         for result_ in check_results:

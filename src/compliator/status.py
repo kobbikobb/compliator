@@ -41,7 +41,7 @@ CADENCE_DAYS = {"annual": 365, "semiannual": 182, "quarterly": 91}
 REQUIRED_KEYS = ("id", "title", "owner", "status")
 
 # Files under isms/ that are not controlled documents.
-NOT_A_DOCUMENT = ("README.md", "_template.md")
+NOT_A_DOCUMENT = ("README.md",)
 
 # `isms/frameworks.md` is a plain note - it records a choice, it is not a document
 # anyone approves, and the repository's own copy has no front matter either.
@@ -66,7 +66,6 @@ class Finding:
 class Document:
     path: str
     front: dict[str, Any]
-    body: str
     todos: int = 0
     broken: str | None = None
 
@@ -107,7 +106,6 @@ def _documents(instance: Path) -> list[Document]:
             Document(
                 path=relative,
                 front=front or {},
-                body=body,
                 todos=_count_todos(body),
                 broken=problem,
             )
@@ -153,7 +151,9 @@ def check_documents(instance: Path, control_ids: set[str], today: date) -> tuple
         for key in REQUIRED_KEYS:
             if key not in document.front:
                 findings.append(Finding("error", subject, f"front matter is missing `{key}`"))
-        if not document.front.get("owner"):
+        # Present but empty only: an absent `owner` is already reported by the
+        # loop above, and one defect must produce exactly one finding.
+        if "owner" in document.front and not document.front.get("owner"):
             findings.append(Finding("error", subject, "no owner - an unattributed document is not evidence"))
         title = document.front.get("title")
         if title is not None and not str(title).strip():
@@ -231,7 +231,6 @@ def _parse_timestamp(value: Any) -> datetime | None:
 
 
 def check_evidence(
-    instance: Path,
     evidence_root: Path,
     controls: list[Any],
     today: date,
@@ -378,7 +377,7 @@ def run(
     findings: list[Finding] = []
     documents, document_findings = check_documents(target, {control.id for control in controls}, today)
     findings.extend(document_findings)
-    findings.extend(check_evidence(target, evidence_root, controls, today))
+    findings.extend(check_evidence(evidence_root, controls, today))
     if config_finding is not None:
         findings.append(config_finding)
 

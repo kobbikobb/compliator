@@ -1,8 +1,9 @@
 # Risks
 
 One Markdown file per risk: `RISK-<NNN>-<slug>.md` from
-[`_template.md`](_template.md). Template only — no risks identified yet, which
-for a real organisation would itself be the finding.
+[`src/compliator/templates/risk.md`](../../src/compliator/templates/risk.md)
+— the same skeleton `compliator init` writes. Template only — no risks identified
+yet, which for a real organisation would itself be the finding.
 
 A risk is something that could go wrong, how bad it would be, what you do about
 it, and who owns that decision. Controls treat risks; the SoA
