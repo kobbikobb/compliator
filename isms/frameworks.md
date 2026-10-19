@@ -1,9 +1,9 @@
 # Frameworks
 
 How an external framework relates to your policies and controls. Short design
-note — there is **no code for any of this yet**, and the control configs
-currently carry framework references as free-text strings, which is exactly what
-this note argues should change.
+note — there is **no code for the mapping yet**: the control configs carry
+framework references as free-text strings, which is exactly what this note argues
+should change, and nothing reads a framework choice to decide anything.
 
 ## The layers
 

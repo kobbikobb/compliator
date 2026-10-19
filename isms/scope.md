@@ -12,7 +12,8 @@ review_cadence: annual
 > do*. Living outside the boundary is a definition, breaking a policy is a
 > violation, and the two are evidenced differently. The standard treats scope as
 > its own documented information (clause 4.3), so it is document #0 in the
-> reading order — not `POL-000`. Conventions and ids are in [`../README.md`](../README.md).
+> reading order — not `POL-000`. Conventions and ids are in
+> [`../CONTRIBUTING.md`](../CONTRIBUTING.md).
 >
 > **Decision: kept as its own document.** Clause 4.3 requires the scope to be
 > available as documented information; it does not require a separate file, and a
