@@ -60,25 +60,9 @@ CREATE_POLICIES = "policies"
 
 
 @dataclass
-class Question:
-    """How one item is offered.
-
-    ``key`` is the label in the answers file's ``create`` map; ``optional`` items
-    default to *no* interactively and to *yes* from an answers file, because a
-    file that was written out by hand is a deliberate statement.
-    """
-
-    key: str
-    path: str
-    question: str
-    optional: bool = False
-
-
-@dataclass
 class Result:
     created: list[str] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)
-    declined: list[str] = field(default_factory=list)
 
 
 class Ask:
@@ -209,8 +193,8 @@ def _document(front_matter: dict[str, Any], body: str) -> str:
     return text if text.endswith("\n") else text + "\n"
 
 
-def _scan(target: Path, frameworks: Sequence[Framework]) -> list[tuple[str, str, bool]]:
-    """(path, state, offered) for everything an instance could hold.
+def _scan(target: Path, frameworks: Sequence[Framework]) -> list[tuple[str, str]]:
+    """(path, state) for everything an instance could hold.
 
     Scanning for every framework's SoA file, not just the selected ones, is
     deliberate: the report answers "what could this instance hold", so it should
@@ -220,14 +204,13 @@ def _scan(target: Path, frameworks: Sequence[Framework]) -> list[tuple[str, str,
     paths += [policy.path for policy in POLICIES]
     paths += [framework.soa_path for framework in frameworks if framework.soa_path]
 
-    rows: list[tuple[str, str, bool]] = []
+    rows: list[tuple[str, str]] = []
     seen: set[str] = set()
     for path in paths:
         if path in seen:
             continue
         seen.add(path)
-        exists = (target / path).is_file()
-        rows.append((path, "present" if exists else "missing", not exists))
+        rows.append((path, "present" if (target / path).is_file() else "missing"))
     return rows
 
 
@@ -482,10 +465,10 @@ def run(
     # The scan is the "are we set up yet?" answer, and it is printed before any
     # question is asked - including in the case where no question is needed.
     rows = _scan(target, FRAMEWORKS)
-    missing = [path for path, state, _ in rows if state == "missing"]
+    missing = [path for path, state in rows if state == "missing"]
 
     print(f"Scanning {target if str(target) else '.'}")
-    for path, state, _ in rows:
+    for path, state in rows:
         print(f"  {state:<8} {path}")
     print()
     if not missing:

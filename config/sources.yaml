@@ -20,12 +20,6 @@ sources:
     options:
       fixture: fixtures/hr_roster.csv
 
-  vendor_inventory:
-    plugin: vendor_inventory
-    description: Vendor inventory with risk tiers
-    options:
-      fixture: fixtures/vendor_inventory.yaml
-
   hr_acknowledgments:
     plugin: manual_yaml
     description: Human-filled policy acknowledgment form (manual input)

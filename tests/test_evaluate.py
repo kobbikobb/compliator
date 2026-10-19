@@ -42,11 +42,6 @@ class TestPopulationOps(unittest.TestCase):
         self.assertFalse(result.passed)
         self.assertIn("1 of 2", result.detail)
 
-    def test_none_equal(self):
-        raw = {"items": [{"v": "banana"}, {"v": 2}]}
-        self.assertFalse(evaluate_check(raw, check("none_equal", "v", 2, {"path": "items"}), AS_OF).passed)
-        self.assertTrue(evaluate_check(raw, check("none_equal", "v", 3, {"path": "items"}), AS_OF).passed)
-
     def test_exists_rejects_nulls(self):
         raw = {"items": [{"v": "x"}, {"v": None}, {"v": ""}]}
         result = evaluate_check(raw, check("exists", "v", population={"path": "items"}), AS_OF)

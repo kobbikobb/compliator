@@ -79,7 +79,7 @@ class TestPackagerAndVerify(unittest.TestCase):
         from compliator.packager import write_record
         from compliator.plugins import get_plugin
 
-        control = self.project.control_by_id("soc2-cc8.1")
+        control = next(c for c in self.project.controls if c.id == "soc2-cc8.1")
         plugin = get_plugin("mock_github")
         options = self.project.sources["github_org"].options
         raw, provenance = plugin.pull(options, self.project.root)

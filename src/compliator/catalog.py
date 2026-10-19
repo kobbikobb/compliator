@@ -61,8 +61,6 @@ POLICIES: tuple[Policy, ...] = (
     Policy(12, "physical-security", "Physical Security Policy", "only if there is somewhere physical to protect", "no"),
 )
 
-BY_NUMBER: dict[int, Policy] = {policy.number: policy for policy in POLICIES}
-
 # The set isms/policies/README.md calls out for a small organisation: 1, 2, the
 # risk work, then 3, 4, 6, 7, 8 and a short version of 10. 5, 9, 11 and 12 are
 # deliberately absent - "fewer, true policies beat a full set nobody follows".
@@ -77,7 +75,6 @@ class Framework:
     title: str
     requires_soa: bool
     soa_filename: str | None
-    soa_reference: str
     note: str
 
     @property
@@ -91,7 +88,6 @@ FRAMEWORKS: tuple[Framework, ...] = (
         title="ISO/IEC 27001:2022",
         requires_soa=True,
         soa_filename="soa.iso_27001_2022.md",
-        soa_reference="clause 6.1.3 d",
         note="requires a statement of applicability; the filename pins the revision",
     ),
     Framework(
@@ -99,12 +95,9 @@ FRAMEWORKS: tuple[Framework, ...] = (
         title="SOC 2 Trust Services Criteria",
         requires_soa=False,
         soa_filename=None,
-        soa_reference="",
         note="no statement of applicability: you choose criteria and describe the system",
     ),
 )
-
-BY_KEY: dict[str, Framework] = {framework.key: framework for framework in FRAMEWORKS}
 
 # What a person is likely to type, mapped to a registry key. ", " and " and "
 # separated lists are split before lookup, so "iso, soc2" and "both" both work.

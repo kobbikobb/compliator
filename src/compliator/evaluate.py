@@ -9,7 +9,6 @@ Supported operators (v1):
 
   population ops (check has a ``population``; ``must.path`` resolved per item):
     all_equal          every resolved value == value
-    none_equal         no resolved value == value
     exists             every resolved value is present (not null)
     date_within_days   every resolved date is 0..value days before ``as_of``
     min_gte            minimum of resolved numeric values >= value
@@ -31,7 +30,7 @@ from typing import Any
 from .errors import CompliatorError, ConfigError, EmptyPopulationError
 
 POPULATION_OPS = frozenset(
-    {"all_equal", "none_equal", "exists", "date_within_days", "min_gte", "count_gte"}
+    {"all_equal", "exists", "date_within_days", "min_gte", "count_gte"}
 )
 SCALAR_OPS = frozenset({"equals", "gte", "exists", "count_gte"})
 ALL_OPS = POPULATION_OPS | SCALAR_OPS
@@ -147,10 +146,6 @@ def _eval_population_op(
         observed = values
         bad = [v for v in values if v != must.value]
         return (not bad, observed, "" if not bad else f"{len(bad)} of {len(values)} items != {must.value!r}")
-    if op == "none_equal":
-        observed = values
-        hits = [v for v in values if v == must.value]
-        return (not hits, observed, "" if not hits else f"{len(hits)} items == {must.value!r}")
     if op == "exists":
         observed = values
         missing = [i for i, v in enumerate(values) if v is None or v == ""]

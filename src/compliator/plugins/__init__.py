@@ -12,7 +12,6 @@ from .hr_roster import HRRosterPlugin
 from .manual_yaml import ManualYamlPlugin
 from .mock_cloud import MockCloudPlugin
 from .mock_github import MockGitHubPlugin
-from .vendor_inventory import VendorInventoryPlugin
 
 _REGISTRY: dict[str, type[SourcePlugin]] = {
     plugin.name: plugin
@@ -20,7 +19,6 @@ _REGISTRY: dict[str, type[SourcePlugin]] = {
         MockGitHubPlugin,
         MockCloudPlugin,
         HRRosterPlugin,
-        VendorInventoryPlugin,
         ManualYamlPlugin,
     )
 }

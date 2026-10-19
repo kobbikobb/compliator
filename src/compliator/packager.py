@@ -42,7 +42,6 @@ from .evaluate import CheckResult
 
 EVIDENCE_SCHEMA = "compliator/evidence-record/v1"
 MANIFEST_SCHEMA = "compliator/evidence-manifest/v1"
-EVIDENCE_ROOT_ENV = "COMPLIATOR_EVIDENCE_DIR"
 
 
 def canonical_json(obj: Any) -> str:

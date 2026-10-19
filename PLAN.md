@@ -4,21 +4,9 @@ Short, ordered roadmap. One milestone at a time; a milestone is done when its
 output is reviewable, not when the code exists. Later milestones will change as
 earlier ones teach us something.
 
-## Current state: Milestone 0 — publish safely (in progress)
+## Current state: Milestone 0 — published
 
-Inspect the existing prototype, separate what is genuinely public-safe from what
-is not, prepare a minimal credible open-source repository, and publish to a
-personal GitHub account with a clean history.
-
-Existing work kept: the evidence-verification engine in `src/compliator/` (config
-loader, evaluator, packager, verifier, thin fixture plugins, 7 example controls,
-49 tests at the time, synthetic fixtures). Nothing in it is being rewritten; the
-verifier now
-enforces the schema ids a record declares and reports engine-version skew, so a
-record can no longer store a checkout-specific verification command.
-
-Status: repository public; Milestone 0 closes when the getting-started documents
-merge. See the handoff report for details.
+Repository public. `compliator init` (Milestone 3 groundwork) and `compliator status` (document completeness + evidence freshness/verification) are shipped; the getting-started flow and README are in place. The core prototype (config, engine, evaluator, packager, verifier, 7 synthetic controls) is working and tested.
 
 ## Milestone 1 — Architecture vision
 
@@ -42,11 +30,8 @@ identifiers. No code for it in this milestone.
 
 Describe a fictional one-person software startup: what it builds, which systems
 it uses, its data categories, assets, stakeholders, and ISMS scope. Add the
-minimum Markdown structure (scope, policies, risks, controls, evidence notes) and
-`AGENTS.md` conventions needed to represent that company clearly.
-
-Keep reusable project tooling separate from the fictional example only once the
-separation actually helps. Outcome: a directory tree a newcomer can navigate.
+minimum Markdown structure (scope, policies, risks, controls, evidence notes) to
+represent that company clearly.
 
 ## Milestone 3 — Establish a tiny real ISMS
 
@@ -61,15 +46,10 @@ Explicitly **not** in scope: bulk-generating 93 Annex A controls, or claiming
 audit readiness from paper artifacts. Outcome: a coherent, tiny ISMS with visible
 human accountability.
 
-A new instance does not have to start from a blank page: `compliator init` scans
-for this document set, reports what is missing, and offers each document in turn,
-writing the skeletons (front matter, headings, and a `TODO` per fact it does not
-know). It deliberately stops at skeletons — no policy statement, risk rating or
-applicability decision is ever invented — and it never overwrites a file or sets
-`status: approved`. `compliator status` then reads the result back: unfinished
-`TODO`s, an `approved` document with nobody behind it, a review overdue against
-its own cadence, a policy citing a control that does not exist, and per control
-whether the evidence exists, passed, is current and still verifies. See
+A new instance starts with `compliator init` and is checked by `compliator status`:
+unfinished `TODO`s, an `approved` document with nobody behind it, a review overdue
+against its own cadence, a policy citing a control that does not exist, and per
+control whether the evidence exists, passed, is current and still verifies. See
 [`ENGINE.md`](ENGINE.md).
 
 ## Milestone 4 — One end-to-end verification slice

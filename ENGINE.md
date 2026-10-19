@@ -13,7 +13,8 @@ cloud account, no database.
 | Python 3.9+ | runs the engine | 3.9, 3.13 and 3.14 run the suite in CI; stdlib only, except… |
 | PyYAML ≥ 6.0 | parses control/source config | `python3 -m pip install -r requirements.txt` |
 | git | evidence and ISMS documents are reviewed as diffs | — |
-| `gh` CLI | optional | only for creating PRs / talking to GitHub later |
+| `gh` CLI | optional | for PR workflow |
+
 
 When real sources arrive (Milestone 4 in [`PLAN.md`](PLAN.md)) they will
 need **read-only credentials**: a token scoped to *read* the facts being checked,
@@ -212,7 +213,7 @@ checks:
       value: true
 ```
 
-Operators — population: `all_equal`, `none_equal`, `exists`, `date_within_days`,
+Operators — population: `all_equal`, `exists`, `date_within_days`,
 `min_gte`, `count_gte`; scalar: `equals`, `gte`, `exists`, `count_gte`. Misuse
 (unknown op, population op with no population, dangling source, duplicate id) is
 a hard error before collection starts.
