@@ -87,16 +87,11 @@ documents to match them.
 
 ## Design constraints to respect
 
-These are load-bearing, and tests assert several of them:
-
-- A collection failure writes **no** evidence record and surfaces loudly; it
-  never degrades into an empty or stale pass.
-- An empty population is an **error**, not a vacuous pass — though as noted in
-  `PLAN.md`, distinguishing "no population", "failed enumeration", and
-  "legitimately absent resources" is still an open design question.
-- Records keep the raw source payload alongside the verdict, and every check
-  records the values it observed.
-- Verification re-computes hashes; it never trusts stored ones.
+These are load-bearing, and tests assert several of them. The full list lives
+in [`ENGINE.md`](ENGINE.md), "Properties the design holds onto" — read it
+before changing how evidence is written, verified, or stored. One nuance it
+does not settle: distinguishing "no population", "failed enumeration", and
+"legitimately absent resources" is still an open design question (`PLAN.md`).
 
 ## Open questions
 
