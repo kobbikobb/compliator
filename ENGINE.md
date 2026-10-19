@@ -120,8 +120,16 @@ It reads two halves and reports findings under three levels:
 
 Levels are **error** (a claim contradicted by the files), **warning** (a
 judgement call, and normal in a young instance), and **note** (worth knowing;
-does not affect the exit code). Exit codes: `0` nothing to report · `1` findings
-· `2` could not run.
+does not affect the exit code). Exit codes: `0` nothing to report · `1` errors
+or warnings (a note-only run is `0`) · `2` could not run.
+
+The evidence half shares one honesty rule with the engine: a check that did not
+run is never a pass. If the control configuration cannot be loaded there are no
+controls to check against, so that is itself a finding — a *missing* config is a
+warning, because a documents-only instance is a legitimate way to start, while a
+config that is there and will not parse (or one you asked for by name that is not
+there) is an error. `LATEST.json` is likewise not taken at face value: it sits
+outside the hashed record, so the record gets the last word on its own result.
 
 It is read-only by construction: it writes nothing, fixes nothing, and has no
 option that could change an instance. A scaffolded instance exits `1` on purpose

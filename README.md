@@ -31,7 +31,7 @@ human approves. Flags, exit codes and the `--answers` file are in
 `TODO`s, a document claiming `approved` with nobody behind it, reviews overdue
 against their own cadence, a policy citing a control that does not exist, and per
 control whether the evidence exists, passed, is current, and still verifies.
-Read-only, and exit `1` when it finds something, so it can gate CI.
+Read-only, and exit `1` on errors or warnings, so it can gate CI.
 
 ## Two halves, and you only need one to start
 
