@@ -19,6 +19,7 @@ Interactive by default, entirely non-interactive with ``--answers FILE``, and
 
 from __future__ import annotations
 
+import re
 import sys
 from dataclasses import dataclass, field
 from datetime import date as _date
@@ -145,6 +146,38 @@ def _resolve_frameworks(value: Any) -> tuple[Framework, ...]:
     return tuple(next(framework for framework in FRAMEWORKS if framework.key == key) for key in keys)
 
 
+FRAMEWORK_MENU = (
+    ("1", "iso", "ISO/IEC 27001:2022 - requires a statement of applicability"),
+    ("2", "soc2", "SOC 2 Trust Services Criteria - you choose criteria, no statement of applicability"),
+    ("3", "both", "Both"),
+    ("4", "none", "Decide later"),
+)
+
+
+def declared_frameworks(target: Path) -> tuple[Framework, ...]:
+    """Frameworks an instance already records: a row in frameworks.md, or its SoA file."""
+    notes = target / FRAMEWORKS_PATH
+    text = notes.read_text(encoding="utf-8") if notes.is_file() else ""
+    found = []
+    for framework in FRAMEWORKS:
+        in_table = re.search(rf"^\|\s*{re.escape(framework.title)}\s*\|", text, re.MULTILINE)
+        has_soa = framework.soa_path is not None and (target / framework.soa_path).is_file()
+        if in_table or has_soa:
+            found.append(framework)
+    return tuple(found)
+
+
+def _ask_framework(ask: "Ask") -> tuple[Framework, ...]:
+    """A numbered menu; a number or a name is accepted."""
+    print("Which framework are you orienting to? It decides which statement of")
+    print("applicability you write; you can add another later with `make framework`.")
+    for number, _, label in FRAMEWORK_MENU:
+        print(f"  {number}) {label}")
+    answer = ask.text("Choose 1-4", "1").strip()
+    by_number = {number: alias for number, alias, _ in FRAMEWORK_MENU}
+    return _resolve_frameworks(by_number.get(answer, answer))
+
+
 def _resolve_policies(value: Any) -> tuple[Policy, ...]:
     """``minimal`` | ``all`` | ``none`` | ``[1, 3, 5]`` -> policies, in order."""
     by_number = {policy.number: policy for policy in POLICIES}
@@ -246,7 +279,7 @@ def _plan_from_answers(answers: dict[str, Any], create_all: bool) -> _Plan:
     )
 
 
-def _plan_interactively(ask: Ask, pending: set[str]) -> _Plan:
+def _plan_interactively(ask: Ask, pending: set[str], known: tuple[Framework, ...] | None) -> _Plan:
     """One question at a time, in the order the documents depend on each other."""
     print()
     create: dict[str, bool] = {}
@@ -262,7 +295,8 @@ def _plan_interactively(ask: Ask, pending: set[str]) -> _Plan:
         what_it_does = ask.text("  What the business does, in one line", TODO)
         owner = ask.text("  Owner (a role or an address)", DEFAULT_OWNER)
 
-    frameworks = _resolve_frameworks(ask.text("Orient to which framework? iso_27001_2022 / soc2 / both / none", FRAMEWORKS[0].key))
+    # A framework already declared or passed in is not asked about again.
+    frameworks = known if known is not None else _ask_framework(ask)
     framework_paths = {framework.soa_path for framework in frameworks if framework.soa_path}
 
     create[CREATE_FRAMEWORKS] = FRAMEWORKS_PATH in pending and ask.yes(
@@ -439,13 +473,7 @@ def _print_next_steps(result: Result, remaining: Sequence[str], required_soa: se
         print("No statement of applicability: the declared framework(s) do not require one.")
 
     print()
-    print("Next:")
-    print("  1. Fill the TODOs. They are questions, not placeholders - an agent can")
-    print("     draft them, but only a named human sets `status: approved`.")
-    print("  2. Write the controls that make a policy statement checkable")
-    print("     (`config/controls/*.yaml`), then run the engine:")
-    print("       PYTHONPATH=src python3 -m compliator list")
-    print("       PYTHONPATH=src python3 -m compliator collect")
+    print("Next: run `make next` - it names the one thing to do now.")
 
 
 def run(
@@ -455,6 +483,7 @@ def run(
     dry_run: bool = False,
     ask: Ask | None = None,
     today: str | None = None,
+    framework: str | None = None,
 ) -> int:
     """Scan, ask, write. Returns a process exit code (0 ok, 2 refused)."""
     if target.exists() and not target.is_dir():
@@ -478,16 +507,24 @@ def run(
     print(f"{len(missing)} of {len(rows)} document(s) missing. Existing files are never overwritten.")
 
     answers = _load_answers(answers_path) if answers_path else None
+    if framework is not None:
+        known: tuple[Framework, ...] | None = _resolve_frameworks(framework)
+    else:
+        known = declared_frameworks(target) or None
     if answers is not None:
+        if known is not None and "frameworks" not in answers:
+            answers["frameworks"] = [item.key for item in known]
         plan = _plan_from_answers(answers, create_all=True)
     elif dry_run:
-        plan = _plan_from_answers({}, create_all=True)
+        plan = _plan_from_answers(
+            {"frameworks": [item.key for item in known]} if known is not None else {}, create_all=True
+        )
     else:
         if ask is None and not sys.stdin.isatty():
             raise OnboardingError(
                 "standard input is not a terminal; pass --answers FILE for a non-interactive run, or --dry-run"
             )
-        plan = _plan_interactively(ask or Ask(), set(missing))
+        plan = _plan_interactively(ask or Ask(), set(missing), known)
 
     stamp = today or _date.today().isoformat()
 
@@ -529,3 +566,61 @@ def _order(path: str) -> tuple[int, str]:
     if path == RISK_PATH:
         return (30, path)
     return (40, path)
+
+
+def run_framework(
+    target: Path,
+    choice: str | None = None,
+    *,
+    dry_run: bool = False,
+    ask: Ask | None = None,
+    today: str | None = None,
+) -> int:
+    """Declare the framework(s), and write what a declaration needs.
+
+    Writes ``isms/frameworks.md`` and, where a framework requires one, its
+    statement of applicability. Never overwrites. With no choice it reports what
+    is declared, or asks when there is a terminal and nothing declared yet.
+    """
+    if target.exists() and not target.is_dir():
+        raise OnboardingError(f"target is not a directory: {target}")
+    declared = declared_frameworks(target)
+
+    if choice is None:
+        if declared:
+            print("Declared: " + ", ".join(item.title for item in declared))
+            print("To add or change, pass FRAMEWORK=iso_27001_2022, soc2 or both.")
+            return 0
+        if ask is None and not sys.stdin.isatty():
+            raise OnboardingError("standard input is not a terminal; pass --set iso_27001_2022|soc2|both|none")
+        frameworks = _ask_framework(ask or Ask())
+    else:
+        frameworks = _resolve_frameworks(choice)
+
+    plan = _Plan(
+        organization=DEFAULT_ORGANIZATION,
+        what_it_does=TODO,
+        owner=DEFAULT_OWNER,
+        frameworks=frameworks,
+        policies=(),
+        risk_title=TODO,
+        create={
+            CREATE_SCOPE: False,
+            CREATE_FRAMEWORKS: True,
+            CREATE_RISK: False,
+            CREATE_SOA: True,
+            CREATE_POLICIES: False,
+        },
+    )
+    files = _contents(plan, today or _date.today().isoformat())
+    result = Result()
+    print("Plan:" if dry_run else "Writing:")
+    for path in sorted(files, key=_order):
+        _emit(target, path, files[path], dry_run, result)
+    if not frameworks:
+        print("No framework declared. Run `make framework` when you have decided.")
+    elif result.skipped and not result.created:
+        print("Nothing new to write; to change the declaration, edit isms/frameworks.md.")
+    print()
+    print("Next: run `make next`.")
+    return 0
