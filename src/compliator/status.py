@@ -23,7 +23,7 @@ from __future__ import annotations
 import json
 import re
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, TextIO
@@ -60,6 +60,8 @@ class Finding:
     level: str
     subject: str
     message: str
+    kind: str = ""  # "unfinished", "ready" or "evidence"; empty for the rest
+    count: int = 0  # for "unfinished": the TODOs left
 
 
 @dataclass
@@ -177,9 +179,9 @@ def check_documents(instance: Path, control_ids: set[str], today: date) -> tuple
                     Finding("error", subject, f"approved with {document.todos} TODO left - unfinished work presented as done")
                 )
             else:
-                findings.append(Finding("warning", subject, f"unfinished: {document.todos} TODO"))
+                findings.append(Finding("warning", subject, f"unfinished: {document.todos} TODO", "unfinished", document.todos))
         elif status == "draft":
-            findings.append(Finding("note", subject, "draft, no TODOs left - ready for someone to approve"))
+            findings.append(Finding("note", subject, "draft, no TODOs left - ready for someone to approve", "ready"))
 
         days, cadence_findings = _cadence_days(document.front, subject)
         findings.extend(cadence_findings)
@@ -285,7 +287,7 @@ def check_evidence(
             findings.append(
                 Finding("warning", subject, f"evidence is {age}d old, collected every {control.frequency_days}d")
             )
-    return findings
+    return [replace(finding, kind="evidence") for finding in findings]
 
 
 LEVEL_ORDER = {"error": 0, "warning": 1, "note": 2}

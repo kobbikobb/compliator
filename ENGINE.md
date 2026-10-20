@@ -27,10 +27,12 @@ variables or a secret store) and are never committed — see
 ```bash
 make install   # creates .venv and installs PyYAML into it
 make help      # every target, one line each
+make           # same as make next
 
 make list      # configured controls and their checks
 make demo      # collect from the synthetic fixtures, then verify every record
-make status    # is what exists still true?
+make status    # is what exists still true? (`make check` fails on findings)
+make framework # declare framework(s); FRAMEWORK=... skips the menu
 make init      # scaffold the ISMS documents, one at a time
 make test      # the test suite
 ```
@@ -68,7 +70,12 @@ PYTHONPATH=src python3 -m compliator init                    # one document at a
 PYTHONPATH=src python3 -m compliator init --dry-run          # print the plan, write nothing
 PYTHONPATH=src python3 -m compliator init --answers a.yaml   # non-interactive, for CI or a script
 PYTHONPATH=src python3 -m compliator init --target ../acme   # some other instance root
+PYTHONPATH=src python3 -m compliator init --framework soc2   # skip the framework question
+PYTHONPATH=src python3 -m compliator framework --set both    # declare frameworks, write their SoA
+PYTHONPATH=src python3 -m compliator next                    # the one thing to do now; always exits 0
 ```
+
+`next` runs the same checks as `status` in build order and prints the first unmet one with the command to run. A framework already declared (or implied by its SoA file) is not asked about again.
 
 `init` scans the target for the documents an ISMS needs, prints which are present
 and which are missing — that report is also the answer to "are we set up yet?" —

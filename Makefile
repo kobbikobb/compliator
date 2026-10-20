@@ -1,4 +1,4 @@
-.PHONY: help install init demo collect verify test list status check-words clean
+.PHONY: help next install framework init status check collect verify list demo test check-words clean-evidence
 
 # Prefer .venv/ (created by `make install`) over the system interpreter:
 # PEP 668 forbids pip installs into the system Python on macOS/Homebrew.
@@ -8,44 +8,59 @@ PYTHON := $(if $(wildcard $(VENV_PY)),$(VENV_PY),python3)
 # The engine is imported from src/, not installed, so it needs src on the path.
 PYTHONPATH := src
 
-.DEFAULT_GOAL := help
+.DEFAULT_GOAL := next
 
-# `make` or `make help` lists every target; the text after `##` is the doc.
-help:
-	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
-		| awk 'BEGIN {FS = ":.*?## "}; {printf "  make %-12s %s\n", $$1, $$2}'
+# Runs the engine quietly (@).
+COMPLIATOR := @PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m compliator
+
+##@ Start here
+# ## documents a target; ##@ starts a help section.
+help: ## List every target, in the order you use them
+	@awk 'BEGIN {FS = ":.*?## "} /^##@/ {printf "\n%s\n", substr($$0, 5)} /^[a-zA-Z0-9_-]+:.*?## / {printf "  make %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo
+
+next: ## Name the one thing to do now (the default target)
+	$(COMPLIATOR) next
 
 install: ## Create .venv and install the one runtime dependency (PyYAML)
-	python3 -m venv .venv
-	$(VENV_PY) -m pip install --quiet -r requirements.txt
+	@python3 -m venv .venv
+	@$(VENV_PY) -m pip install --quiet -r requirements.txt
 	@$(VENV_PY) -c "import yaml; print('installed: PyYAML', yaml.__version__)"
+	@echo "Next: make next"
 
-init: ## Scaffold a new instance's ISMS documents (interactive)
-	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m compliator init
+##@ Set up (in order)
+framework: ## Declare the framework(s) you orient to; FRAMEWORK=... skips the menu
+	$(COMPLIATOR) framework $(if $(FRAMEWORK),--set $(FRAMEWORK))
 
-demo: collect verify ## Collect evidence from the synthetic fixtures, then verify every record
+init: ## Scaffold scope, risks, the SoA and policies, one document at a time
+	$(COMPLIATOR) init $(if $(FRAMEWORK),--framework $(FRAMEWORK))
 
-collect: ## Collect evidence from the synthetic fixtures into evidence/
-	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m compliator collect
+##@ Check for gaps
+# Exit 1 (findings) is expected on a young instance; only exit 2 fails.
+status: ## Report every gap: unfinished documents, broken links, stale evidence
+	@PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m compliator status || [ $$? -eq 1 ]
+
+check: ## Like status, but fail on any finding (for CI)
+	$(COMPLIATOR) status
+
+collect: ## Collect evidence into evidence/
+	$(COMPLIATOR) collect
 
 verify: ## Re-hash and verify every record under evidence/
-	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m compliator verify evidence
+	$(COMPLIATOR) verify evidence
+
+list: ## List the controls the config defines
+	$(COMPLIATOR) list
+
+##@ Develop
+demo: collect verify ## Collect from the synthetic fixtures, then verify every record
 
 test: ## Run the unit test suite
-	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m unittest discover -s tests
-
-list: ## List the controls the current config defines
-	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m compliator list
-
-# Reports on the repository's own documents and evidence. Exits 1 when it has
-# findings, so it is not part of `make demo` - a young instance is meant to have
-# them.
-status: ## Report whether the ISMS documents and evidence are still true
-	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m compliator status
+	@PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m unittest discover -s tests
 
 check-words: ## Fail if a tracked file contains banned vocabulary (scripts/slop-words.txt)
-	python3 scripts/check_words.py
+	@python3 scripts/check_words.py
 
-clean: ## Remove generated records but keep the tracked evidence/.gitkeep
+clean-evidence: ## Delete everything under evidence/ (keeps evidence/.gitkeep)
 	rm -rf evidence/*
 	mkdir -p evidence

@@ -12,15 +12,17 @@ anyone can re-derive a verdict from a record without running this application.
 
 ```bash
 make install   # create .venv and install PyYAML into it
-make           # list every target with a one-line description
+make           # name the one thing to do now (same as `make next`)
 
+make framework # declare ISO/IEC 27001, SOC 2, or both
 make init      # scaffold the ISMS documents, one at a time
-make status    # is any of it still true?
+make status    # every gap; `make check` fails on any
 make demo      # collect + verify against the synthetic fixtures
 ```
 
-`init` never overwrites and never approves — a named human does. `status` is
-read-only and exits `1` on errors or warnings, so it can gate CI. Flags, exit
+Run `make` after each step; it names what to do next. `init` never
+overwrites and never approves — a named human does. `status` is read-only and
+exits `1` on errors or warnings, so it can gate CI (`make check`). Flags, exit
 codes and the `--answers` file are in [`ENGINE.md`](ENGINE.md).
 
 ## Two halves, and you only need one to start
