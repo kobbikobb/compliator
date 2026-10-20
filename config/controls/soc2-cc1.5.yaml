@@ -7,9 +7,9 @@ control:
     human-maintained form (manual input), not a system export.
   owner: people-ops@example.invalid
   frequency: 30d
-  frameworks:
-    soc2: "CC1.5 - Accountability (illustrative mapping)"
-    iso_27001: "A.6.8 - Information security awareness, education and training (illustrative mapping)"
+  mappings:
+    soc2: [CC1.5]
+    iso_27001_2022: [A.5.10]
 
 source: hr_acknowledgments
 

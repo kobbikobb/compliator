@@ -28,6 +28,7 @@ from typing import Any
 import yaml
 
 from .errors import ConfigError
+from .requirements import Catalog, load_catalogs
 from .evaluate import ALL_OPS, OPS_REQUIRING_VALUE, POPULATION_OPS, SCALAR_OPS, Must, Population
 
 FREQUENCY_RE = re.compile(r"^(\d+)d$")
@@ -104,6 +105,7 @@ class Control:
     owner: str
     frequency_days: int
     frameworks: dict[str, str]
+    mappings: dict[str, tuple[str, ...]]
     source: str
     checks: list[Check]
     config_path: Path
@@ -116,6 +118,7 @@ class Project:
     config_dir: Path
     sources: dict[str, SourceDef]
     controls: list[Control]
+    catalogs: dict[str, Catalog]
 
 
 def _load_yaml(path: Path) -> dict[str, Any]:
@@ -159,7 +162,33 @@ def load_sources(config_dir: Path) -> dict[str, SourceDef]:
     return sources
 
 
-def load_controls(config_dir: Path, sources: dict[str, SourceDef]) -> list[Control]:
+def _parse_mappings(
+    raw: Any, catalogs: dict[str, Catalog], path: Path
+) -> dict[str, tuple[str, ...]]:
+    """``{framework: [requirement ids]}``, every id checked against its catalog."""
+    if raw is None:
+        return {}
+    if not isinstance(raw, dict) or not raw:
+        raise ConfigError(f"{path}: 'mappings' must be a non-empty mapping of framework -> [ids]")
+    mappings: dict[str, tuple[str, ...]] = {}
+    for key, ids in raw.items():
+        key = str(key)
+        if key not in catalogs:
+            known = ", ".join(sorted(catalogs)) or "none - no frameworks/ catalog found"
+            raise ConfigError(f"{path}: mappings: unknown framework {key!r} (known: {known})")
+        if not isinstance(ids, list) or not ids:
+            raise ConfigError(f"{path}: mappings.{key} must be a non-empty list of requirement ids")
+        for rid in map(str, ids):
+            if rid not in catalogs[key].requirements:
+                raise ConfigError(f"{path}: mappings.{key}: {rid!r} is not in the {key} catalog")
+        mappings[key] = tuple(str(rid) for rid in ids)
+    return mappings
+
+
+def load_controls(
+    config_dir: Path, sources: dict[str, SourceDef], catalogs: dict[str, Catalog] | None = None
+) -> list[Control]:
+    catalogs = catalogs or {}
     controls_dir = config_dir / "controls"
     if not controls_dir.is_dir():
         raise ConfigError(f"missing controls directory: {controls_dir}")
@@ -190,9 +219,15 @@ def load_controls(config_dir: Path, sources: dict[str, SourceDef]) -> list[Contr
         if not freq_match:
             raise ConfigError(f"{path}: frequency must look like '1d', got {frequency!r}")
 
+        mappings = _parse_mappings(meta.get("mappings"), catalogs, path)
         framework_raw = meta.get("frameworks", {})
+        if mappings:
+            framework_raw = {
+                key: ", ".join(f"{rid} - {catalogs[key].requirements[rid]}" for rid in ids)
+                for key, ids in mappings.items()
+            }
         if not isinstance(framework_raw, dict) or not framework_raw:
-            raise ConfigError(f"{path}: 'frameworks' must be a non-empty mapping")
+            raise ConfigError(f"{path}: needs a non-empty 'mappings' (or legacy 'frameworks') mapping")
 
         source = data.get("source")
         if not source or source not in sources:
@@ -221,6 +256,7 @@ def load_controls(config_dir: Path, sources: dict[str, SourceDef]) -> list[Contr
                 owner=str(meta["owner"]),
                 frequency_days=int(freq_match.group(1)),
                 frameworks={str(k): str(v) for k, v in framework_raw.items()},
+                mappings=mappings,
                 source=str(source),
                 checks=checks,
                 config_path=path,
@@ -236,5 +272,6 @@ def load_project(config_dir: str | Path = "config") -> Project:
         raise ConfigError(f"config directory not found: {config_dir}")
     root = config_dir.parent
     sources = load_sources(config_dir)
-    controls = load_controls(config_dir, sources)
-    return Project(root=root, config_dir=config_dir, sources=sources, controls=controls)
+    catalogs = load_catalogs(root / "frameworks")
+    controls = load_controls(config_dir, sources, catalogs)
+    return Project(root=root, config_dir=config_dir, sources=sources, controls=controls, catalogs=catalogs)

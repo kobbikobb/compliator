@@ -8,9 +8,9 @@ control:
     administrators.
   owner: platform-team@example.invalid
   frequency: 1d
-  frameworks:
-    soc2: "CC8.1 - Change management (illustrative mapping)"
-    iso_27001: "A.8.32 - Change management (illustrative mapping)"
+  mappings:
+    soc2: [CC8.1]
+    iso_27001_2022: [A.8.32]
 
 source: github_org
 

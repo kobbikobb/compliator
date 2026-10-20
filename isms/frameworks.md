@@ -1,9 +1,7 @@
 # Frameworks
 
 How an external framework relates to your policies and controls. Short design
-note — there is **no code for the mapping yet**: the control configs carry
-framework references as free-text strings, which is exactly what this note argues
-should change, and nothing reads a framework choice to decide anything.
+note; what is built is listed under "Built" below.
 
 ## The layers
 
@@ -39,38 +37,20 @@ Framework (ISO/IEC 27001:2022, SOC 2 TSC, ...)
    applicability; SOC 2 does not (you choose criteria and describe the system).
    Framework metadata has to carry that difference rather than assuming it.
 
-## Why it is worth fixing rather than living with free text
+## Built
 
-Today a control says `soc2: "CC8.1 - Change management (illustrative mapping)"`.
-That means:
+- `frameworks/<framework-id>.yaml`: requirement ids and our own summaries, with a
+  version and a `complete` flag. No standard text.
+- Controls carry `mappings: {framework: [ids]}`; the loader fails on an unknown
+  framework or id.
+- `status` and `next` report requirements of a declared framework that no control
+  maps to, for catalogs marked `complete: true`.
 
-- a typo (`A.8.3z`, `CC8.10`) is invisible — nothing validates the identifier;
-- "which Annex A controls have no covering control?" cannot be answered, so
-  coverage gaps are unknowable;
-- policy-to-requirement traces are prose, not data, so nothing can check them.
+## Not built
 
-## Direction (not built)
-
-- `frameworks/<framework-id>.yaml` — a catalog (promote this file to a `frameworks/` folder then): identifier, our own
-  one-line summary, whether it is a clause or a control, framework version.
-  **Identifiers and our own summaries only.** No copyrighted standard text is
-  stored or redistributed ([`../VISION.md`](../VISION.md), principle 9).
-- Control configs keep the mapping, structured and validated:
-
-  ```yaml
-  mappings:
-    iso_27001_2022: [A.8.32]
-    soc2_tsc: [CC8.1]
-  ```
-
-  The loader fails loudly on an identifier that is not in the catalog — a small
-  change to `src/compliator/config.py`, turning a comment into an assertion.
-- The framework version is pinned in the catalog and, ideally, in the evidence
-  record alongside `config_sha256`, so a framework revision cannot silently
-  reinterpret old evidence.
-- Later: a coverage report — reverse the mapping and list requirements with no
-  covering control, plus the documentation-consistency checks described in
-  [`../PLAN.md`](../PLAN.md).
+- Complete catalogs. The two shipped are partial, so no coverage gap can show.
+- The framework version pinned in the evidence record next to `config_sha256`.
+- Policy-to-requirement traces as data.
 
 ## Open questions
 
@@ -83,9 +63,3 @@ That means:
   (Milestone 2 decides where this lives; it is reference data, not ISMS content.)
 - Whether catalog files belong in the public repo at all, or should be fetched,
   given the copyright boundary.
-
-## Status
-
-Written up now so the shape is visible before code exists. Milestone 1 reviews
-it alongside [`../VISION.md`](../VISION.md); the catalog and validation are
-their own later change.

@@ -7,9 +7,9 @@ control:
     where available.
   owner: platform-team@example.invalid
   frequency: 1d
-  frameworks:
-    soc2: "CC6.8 - Prevention of malicious code (illustrative mapping)"
-    iso_27001: "A.8.28 - Secure coding (illustrative mapping)"
+  mappings:
+    soc2: [CC6.8]
+    iso_27001_2022: [A.8.28]
 
 source: github_org
 

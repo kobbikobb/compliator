@@ -7,9 +7,9 @@ control:
     retained for at least 365 days.
   owner: platform-team@example.invalid
   frequency: 1d
-  frameworks:
-    soc2: "CC7.2 - System monitoring (illustrative mapping)"
-    iso_27001: "A.8.15 - Logging (illustrative mapping)"
+  mappings:
+    soc2: [CC7.2]
+    iso_27001_2022: [A.8.15]
 
 source: cloud_acct
 

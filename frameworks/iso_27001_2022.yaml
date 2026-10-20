@@ -1,0 +1,12 @@
+framework: iso_27001_2022
+title: ISO/IEC 27001:2022
+version: "2022"
+complete: false
+requirements:
+  A.5.10: Rules for acceptable use of information and assets are identified and applied
+  A.5.22: Supplier services are monitored, reviewed and their changes managed
+  A.6.5: Security duties that continue after termination or change of employment are defined and enforced
+  A.8.5: Authentication is secure and matched to the access being granted
+  A.8.15: Logs of activities and events are produced, protected and reviewed
+  A.8.28: Secure coding principles are applied to software development
+  A.8.32: Changes to systems follow a change management procedure

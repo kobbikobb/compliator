@@ -6,9 +6,9 @@ control:
     enabled on their account.
   owner: platform-team@example.invalid
   frequency: 1d
-  frameworks:
-    soc2: "CC6.1 - Logical access security (illustrative mapping)"
-    iso_27001: "A.8.5 - Secure authentication (illustrative mapping)"
+  mappings:
+    soc2: [CC6.1]
+    iso_27001_2022: [A.8.5]
 
 source: cloud_acct
 

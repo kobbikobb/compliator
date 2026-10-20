@@ -6,9 +6,9 @@ control:
     recorded exit date, evidencing that offboarding was processed.
   owner: people-ops@example.invalid
   frequency: 30d
-  frameworks:
-    soc2: "CC1.2 - Recruitment and onboarding (illustrative mapping)"
-    iso_27001: "A.6.5 - Terms and conditions of employment (illustrative mapping)"
+  mappings:
+    soc2: [CC6.2]
+    iso_27001_2022: [A.6.5]
 
 source: hr_roster
 

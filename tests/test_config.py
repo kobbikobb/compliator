@@ -130,5 +130,48 @@ class TestConfigValidation(unittest.TestCase):
             self.load()
 
 
+CATALOG = """
+framework: fw
+title: Framework
+version: "1"
+complete: {complete}
+requirements:
+  R1: first
+  R2: second
+"""
+
+MAPPED_CONTROL = CONTROL_TEMPLATE.replace('frameworks:\n    soc2: "CC1"', "mappings:\n    {mappings}")
+
+
+class TestMappings(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name)
+        write(self.root / "config" / "sources.yaml", GOOD_SOURCE)
+        write(self.root / "frameworks" / "fw.yaml", CATALOG.format(complete="true"))
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def load(self, mappings):
+        body = "must:\n      path: a\n      op: equals\n      value: 1"
+        write(self.root / "config" / "controls" / "c.yaml", MAPPED_CONTROL.format(mappings=mappings, body=body))
+        return load_project(self.root / "config")
+
+    def test_mapped_ids_are_checked_and_summarised(self):
+        control = self.load("fw: [R1]").controls[0]
+
+        self.assertEqual(control.mappings, {"fw": ("R1",)})
+        self.assertEqual(control.frameworks, {"fw": "R1 - first"})
+
+    def test_an_id_missing_from_the_catalog_is_refused(self):
+        with self.assertRaisesRegex(ConfigError, "'R9' is not in the fw catalog"):
+            self.load("fw: [R9]")
+
+    def test_an_unknown_framework_is_refused(self):
+        with self.assertRaisesRegex(ConfigError, "unknown framework 'other'"):
+            self.load("other: [R1]")
+
+
 if __name__ == "__main__":
     unittest.main()

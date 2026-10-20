@@ -126,7 +126,10 @@ def _cmd_verify(args: argparse.Namespace) -> int:
 def _cmd_list(args: argparse.Namespace) -> int:
     project = load_project(args.config_dir)
     for control in project.controls:
-        frameworks = ", ".join(f"{k}:{v}" for k, v in control.frameworks.items())
+        if control.mappings:
+            frameworks = "; ".join(f"{k}: {', '.join(ids)}" for k, ids in control.mappings.items())
+        else:
+            frameworks = ", ".join(f"{k}:{v}" for k, v in control.frameworks.items())
         print(f"{control.id}  source={control.source}  frequency={control.frequency_days}d")
         print(f"  {control.title}")
         print(f"  frameworks: {frameworks}")

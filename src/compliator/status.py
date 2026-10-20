@@ -32,6 +32,8 @@ import yaml
 
 from .config import load_project
 from .errors import CompliatorError, ConfigError, VerificationError
+from .frameworks import declared_frameworks
+from .requirements import Catalog
 from .verify import verify_record
 
 # Statuses a document may carry, and the cadences front matter may declare.
@@ -290,6 +292,26 @@ def check_evidence(
     return [replace(finding, kind="evidence") for finding in findings]
 
 
+def check_coverage(instance: Path, controls: list[Any], catalogs: dict[str, Catalog]) -> list[Finding]:
+    """Requirements of a declared framework that no control maps to.
+
+    Only a catalog marked complete can show a gap; a partial one cannot say
+    what is missing from the framework.
+    """
+    covered = {(key, rid) for control in controls for key, ids in control.mappings.items() for rid in ids}
+    findings = []
+    for framework in declared_frameworks(instance):
+        catalog = catalogs.get(framework.key)
+        if catalog is None or not catalog.complete:
+            continue
+        for rid, summary in catalog.requirements.items():
+            if (framework.key, rid) not in covered:
+                findings.append(
+                    Finding("warning", f"{framework.key}:{rid}", f"no control maps to this requirement ({summary})", "coverage")
+                )
+    return findings
+
+
 LEVEL_ORDER = {"error": 0, "warning": 1, "note": 2}
 
 
@@ -354,6 +376,7 @@ def run(
     evidence_root = Path(evidence_dir) if evidence_dir else target / "evidence"
 
     controls: list[Any] = []
+    catalogs: dict[str, Catalog] = {}
     note = None
     config_finding: Finding | None = None
     try:
@@ -375,11 +398,13 @@ def run(
         note = f"No control configuration at {config_path} ({exc}). Only the documents were checked."
     else:
         controls = list(project.controls)
+        catalogs = project.catalogs
 
     findings: list[Finding] = []
     documents, document_findings = check_documents(target, {control.id for control in controls}, today)
     findings.extend(document_findings)
     findings.extend(check_evidence(evidence_root, controls, today))
+    findings.extend(check_coverage(target, controls, catalogs))
     if config_finding is not None:
         findings.append(config_finding)
 

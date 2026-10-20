@@ -8,9 +8,9 @@ control:
     (manual input).
   owner: security@example.invalid
   frequency: 90d
-  frameworks:
-    soc2: "CC9.2 - Vendor and partner risk management (illustrative mapping)"
-    iso_27001: "A.5.19 - Supplier agreements (illustrative mapping)"
+  mappings:
+    soc2: [CC9.2]
+    iso_27001_2022: [A.5.22]
 
 source: vendor_reviews
 
