@@ -568,6 +568,39 @@ def _order(path: str) -> tuple[int, str]:
     return (40, path)
 
 
+NO_FRAMEWORK_ROW = "| — | — | none declared yet |"
+
+
+def _declare_in_notes(target: Path, frameworks: Sequence[Framework], dry_run: bool) -> bool:
+    """Add rows for frameworks not yet recorded to an existing frameworks.md.
+
+    Only appends: existing rows, and everything else in the file, are kept.
+    """
+    path = target / FRAMEWORKS_PATH
+    text = path.read_text(encoding="utf-8")
+    recorded = {framework.key for framework in declared_frameworks(target)}
+    new_rows = [
+        f"| {f.title} | {f.soa_path if f.requires_soa else 'not required'} | {f.note} |"
+        for f in frameworks
+        if f.key not in recorded
+    ]
+    if not new_rows:
+        return False
+    lines = [line for line in text.splitlines() if line.strip() != NO_FRAMEWORK_ROW]
+    header = next((i for i, line in enumerate(lines) if line.startswith("| Framework |")), None)
+    if header is None:
+        lines += ["", "## Declared", "", "| Framework | Statement of applicability | Notes |", "| --- | --- | --- |", *new_rows]
+    else:
+        end = header + 1
+        while end < len(lines) and lines[end].startswith("|"):
+            end += 1
+        lines[end:end] = new_rows
+    if not dry_run:
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"  {'would update' if dry_run else 'updated'}    {FRAMEWORKS_PATH}  (+{len(new_rows)} framework row(s))")
+    return True
+
+
 def run_framework(
     target: Path,
     choice: str | None = None,
@@ -612,15 +645,21 @@ def run_framework(
             CREATE_POLICIES: False,
         },
     )
+    if not frameworks:
+        print("No framework declared, so nothing was written. Run `make framework` when you have decided.")
+        return 0
+
     files = _contents(plan, today or _date.today().isoformat())
     result = Result()
     print("Plan:" if dry_run else "Writing:")
+    updated = False
     for path in sorted(files, key=_order):
+        if path == FRAMEWORKS_PATH and (target / path).is_file():
+            updated = _declare_in_notes(target, frameworks, dry_run)
+            continue
         _emit(target, path, files[path], dry_run, result)
-    if not frameworks:
-        print("No framework declared. Run `make framework` when you have decided.")
-    elif result.skipped and not result.created:
-        print("Nothing new to write; to change the declaration, edit isms/frameworks.md.")
+    if not (result.created or updated):
+        print("Already declared; nothing to write.")
     print()
     print("Next: run `make next`.")
     return 0
