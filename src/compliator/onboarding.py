@@ -19,7 +19,6 @@ Interactive by default, entirely non-interactive with ``--answers FILE``, and
 
 from __future__ import annotations
 
-import re
 import sys
 from dataclasses import dataclass, field
 from datetime import date as _date
@@ -41,6 +40,7 @@ from .catalog import (
     Policy,
 )
 from .errors import OnboardingError
+from .frameworks import NO_FRAMEWORK_ROW, TABLE_HEADER, declare_in_notes, declared_frameworks, framework_row
 
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 
@@ -152,19 +152,6 @@ FRAMEWORK_MENU = (
     ("3", "both", "Both"),
     ("4", "none", "Decide later"),
 )
-
-
-def declared_frameworks(target: Path) -> tuple[Framework, ...]:
-    """Frameworks with a row in frameworks.md or an SoA file."""
-    notes = target / FRAMEWORKS_PATH
-    text = notes.read_text(encoding="utf-8") if notes.is_file() else ""
-    found = []
-    for framework in FRAMEWORKS:
-        in_table = re.search(rf"^\|\s*{re.escape(framework.title)}\s*\|", text, re.MULTILINE)
-        has_soa = framework.soa_path is not None and (target / framework.soa_path).is_file()
-        if in_table or has_soa:
-            found.append(framework)
-    return tuple(found)
 
 
 def _ask_framework(ask: "Ask") -> tuple[Framework, ...]:
@@ -343,12 +330,8 @@ def _frameworks_line(frameworks: Sequence[Framework]) -> str:
 
 def _framework_rows(frameworks: Sequence[Framework]) -> str:
     if not frameworks:
-        return "| — | — | none declared yet |"
-    rows = ["| Framework | Statement of applicability | Notes |", "| --- | --- | --- |"]
-    for framework in frameworks:
-        soa = framework.soa_path if framework.requires_soa else "not required"
-        rows.append(f"| {framework.title} | {soa} | {framework.note} |")
-    return "\n".join(rows)
+        return NO_FRAMEWORK_ROW
+    return "\n".join([TABLE_HEADER, "| --- | --- | --- |", *(framework_row(f) for f in frameworks)])
 
 
 def _contents(plan: _Plan, today: str) -> dict[str, str]:
@@ -566,36 +549,6 @@ def _order(path: str) -> tuple[int, str]:
     return (40, path)
 
 
-NO_FRAMEWORK_ROW = "| — | — | none declared yet |"
-
-
-def _declare_in_notes(target: Path, frameworks: Sequence[Framework], dry_run: bool) -> bool:
-    """Append rows for unrecorded frameworks; existing content is kept."""
-    path = target / FRAMEWORKS_PATH
-    text = path.read_text(encoding="utf-8")
-    recorded = {framework.key for framework in declared_frameworks(target)}
-    new_rows = [
-        f"| {f.title} | {f.soa_path if f.requires_soa else 'not required'} | {f.note} |"
-        for f in frameworks
-        if f.key not in recorded
-    ]
-    if not new_rows:
-        return False
-    lines = [line for line in text.splitlines() if line.strip() != NO_FRAMEWORK_ROW]
-    header = next((i for i, line in enumerate(lines) if line.startswith("| Framework |")), None)
-    if header is None:
-        lines += ["", "## Declared", "", "| Framework | Statement of applicability | Notes |", "| --- | --- | --- |", *new_rows]
-    else:
-        end = header + 1
-        while end < len(lines) and lines[end].startswith("|"):
-            end += 1
-        lines[end:end] = new_rows
-    if not dry_run:
-        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"  {'would update' if dry_run else 'updated'}    {FRAMEWORKS_PATH}  (+{len(new_rows)} framework row(s))")
-    return True
-
-
 def run_framework(
     target: Path,
     choice: str | None = None,
@@ -645,7 +598,7 @@ def run_framework(
     updated = False
     for path in sorted(files, key=_order):
         if path == FRAMEWORKS_PATH and (target / path).is_file():
-            updated = _declare_in_notes(target, frameworks, dry_run)
+            updated = declare_in_notes(target, frameworks, dry_run)
             continue
         _emit(target, path, files[path], dry_run, result)
     if not (result.created or updated):

@@ -14,7 +14,7 @@ from typing import Any, Callable, TextIO
 from .catalog import POLICIES, RISK_PATH, SCOPE_PATH, SUGGESTED_START
 from .config import load_project
 from .errors import CompliatorError, ConfigError
-from .onboarding import declared_frameworks
+from .frameworks import declared_frameworks
 from .status import Finding, check_documents, check_evidence
 
 
@@ -22,21 +22,21 @@ from .status import Finding, check_documents, check_evidence
 class Step:
     what: str
     why: str
-    do: str
+    action: str
 
 
 @dataclass
-class _Instance:
+class _Snapshot:
     target: Path
     controls: list[Any]
     config_error: str | None
     findings: list[Finding]
 
 
-Check = Callable[[_Instance], Step | None]
+Check = Callable[[_Snapshot], Step | None]
 
 
-def _framework(inst: _Instance) -> Step | None:
+def _framework(inst: _Snapshot) -> Step | None:
     if declared_frameworks(inst.target):
         return None
     return Step(
@@ -46,13 +46,13 @@ def _framework(inst: _Instance) -> Step | None:
     )
 
 
-def _scope(inst: _Instance) -> Step | None:
+def _scope(inst: _Snapshot) -> Step | None:
     if (inst.target / SCOPE_PATH).is_file():
         return None
     return Step("No scope statement.", "Nothing says what the ISMS covers, so nothing can be judged complete.", "make init")
 
 
-def _risks(inst: _Instance) -> Step | None:
+def _risks(inst: _Snapshot) -> Step | None:
     if list((inst.target / "isms" / "risks").glob("RISK-*.md")):
         return None
     return Step(
@@ -62,7 +62,7 @@ def _risks(inst: _Instance) -> Step | None:
     )
 
 
-def _soa(inst: _Instance) -> Step | None:
+def _soa(inst: _Snapshot) -> Step | None:
     for framework in declared_frameworks(inst.target):
         if framework.soa_path and not (inst.target / framework.soa_path).is_file():
             return Step(
@@ -73,7 +73,7 @@ def _soa(inst: _Instance) -> Step | None:
     return None
 
 
-def _foundation_policies(inst: _Instance) -> Step | None:
+def _foundation_policies(inst: _Snapshot) -> Step | None:
     existing = {path.name.split("-", 2)[1] for path in (inst.target / "isms" / "policies").glob("POL-*.md")}
     missing = [number for number in (1, 2) if f"{number:03d}" not in existing]
     if not missing:
@@ -86,7 +86,7 @@ def _foundation_policies(inst: _Instance) -> Step | None:
     )
 
 
-def _policies(inst: _Instance) -> Step | None:
+def _policies(inst: _Snapshot) -> Step | None:
     existing = {path.name.split("-", 2)[1] for path in (inst.target / "isms" / "policies").glob("POL-*.md")}
     by_number = {policy.number: policy for policy in POLICIES}
     wanted = [by_number[number] for number in SUGGESTED_START if f"{number:03d}" not in existing]
@@ -110,28 +110,28 @@ def _document_order(subject: str) -> tuple[int, str]:
     return (3, subject)
 
 
-def _document_errors(inst: _Instance) -> Step | None:
-    errors = [f for f in inst.findings if f.level == "error" and f.subject.startswith("isms/")]
+def _document_errors(inst: _Snapshot) -> Step | None:
+    errors = [f for f in inst.findings if f.level == "error" and f.kind != "evidence"]
     if not errors:
         return None
     first = min(errors, key=lambda f: _document_order(f.subject))
     return Step(f"{first.subject}: {first.message}.", "A document that claims more than it can back is not evidence.", f"edit {first.subject}")
 
 
-def _unfinished(inst: _Instance) -> Step | None:
-    todo = [f for f in inst.findings if f.level == "warning" and f.message.startswith("unfinished:")]
+def _unfinished(inst: _Snapshot) -> Step | None:
+    todo = [f for f in inst.findings if f.kind == "unfinished"]
     if not todo:
         return None
     first = min(todo, key=lambda f: _document_order(f.subject))
     more = f" ({len(todo) - 1} more documents also unfinished)" if len(todo) > 1 else ""
     return Step(
-        f"{first.subject} has {first.message.removeprefix('unfinished: ')} left{more}.",
+        f"{first.subject} has {first.count} TODO left{more}.",
         "Each TODO is a question only your organisation can answer.",
         f"edit {first.subject}, then make next",
     )
 
 
-def _controls(inst: _Instance) -> Step | None:
+def _controls(inst: _Snapshot) -> Step | None:
     if inst.controls:
         return None
     why = inst.config_error or "no controls defined"
@@ -142,9 +142,8 @@ def _controls(inst: _Instance) -> Step | None:
     )
 
 
-def _evidence(inst: _Instance) -> Step | None:
-    control_ids = {control.id for control in inst.controls}
-    evidence = [f for f in inst.findings if f.subject in control_ids]
+def _evidence(inst: _Snapshot) -> Step | None:
+    evidence = [f for f in inst.findings if f.kind == "evidence"]
     if not evidence:
         return None
     errors = [f for f in evidence if f.level == "error"]
@@ -155,7 +154,7 @@ def _evidence(inst: _Instance) -> Step | None:
     return Step(f"{first.subject}: {first.message}.", "Evidence has to be collected, and kept current.", "make collect")
 
 
-def _remaining(inst: _Instance) -> Step | None:
+def _remaining(inst: _Snapshot) -> Step | None:
     warnings = [f for f in inst.findings if f.level == "warning"]
     if not warnings:
         return None
@@ -163,8 +162,8 @@ def _remaining(inst: _Instance) -> Step | None:
     return Step(f"{first.subject}: {first.message}.", "Unresolved, this stays a finding in `make status`.", "make status")
 
 
-def _ready(inst: _Instance) -> Step | None:
-    drafts = [f for f in inst.findings if f.level == "note"]
+def _awaiting_approval(inst: _Snapshot) -> Step | None:
+    drafts = [f for f in inst.findings if f.kind == "ready"]
     if not drafts:
         return None
     first = drafts[0]
@@ -183,11 +182,11 @@ CHECKS: tuple[Check, ...] = (
     _controls,
     _evidence,
     _remaining,
-    _ready,
+    _awaiting_approval,
 )
 
 
-def _load(target: Path, config_dir: Path | None, evidence_dir: Path | None, today: date) -> _Instance:
+def _load(target: Path, config_dir: Path | None, evidence_dir: Path | None, today: date) -> _Snapshot:
     config_path = config_dir or target / "config"
     evidence_root = evidence_dir or target / "evidence"
     controls: list[Any] = []
@@ -198,7 +197,7 @@ def _load(target: Path, config_dir: Path | None, evidence_dir: Path | None, toda
         config_error = str(exc)
     _, findings = check_documents(target, {control.id for control in controls}, today)
     findings = findings + check_evidence(evidence_root, controls, today)
-    return _Instance(target, controls, config_error, findings)
+    return _Snapshot(target, controls, config_error, findings)
 
 
 def next_step(
@@ -240,7 +239,7 @@ def run(
         return 0
     print(f"Next: {step.what}", file=out)
     print(f"  Why: {step.why}", file=out)
-    print(f"  Do:  {step.do}", file=out)
+    print(f"  Do:  {step.action}", file=out)
     print(file=out)
     print("`make status` shows everything outstanding.", file=out)
     return 0

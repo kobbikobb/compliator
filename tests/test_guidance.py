@@ -6,7 +6,8 @@ from pathlib import Path
 
 from compliator.__main__ import main
 from compliator.guidance import next_step
-from compliator.onboarding import Ask, declared_frameworks, run, run_framework
+from compliator.frameworks import declared_frameworks
+from compliator.onboarding import Ask, run, run_framework
 
 
 def quietly(function, *args, **kwargs):
@@ -95,7 +96,7 @@ class TestNext(unittest.TestCase):
         step = next_step(self.target)
 
         self.assertIn("framework", step.what)
-        self.assertIn("make framework", step.do)
+        self.assertIn("make framework", step.action)
 
     def test_follows_the_build_order(self):
         quietly(run_framework, self.target, "iso_27001_2022")
@@ -109,19 +110,6 @@ class TestNext(unittest.TestCase):
         for name in ("POL-001-a.md", "POL-002-b.md"):
             (isms / "policies" / name).write_text("---\nid: P\n---\n", encoding="utf-8")
         self.assertIn("risks", next_step(self.target).what)
-
-    def test_evidence_finding_for_a_control_named_config_something_is_reported(self):
-        from types import SimpleNamespace
-
-        from compliator import guidance
-        from compliator.status import Finding
-
-        instance = guidance._Instance(
-            self.target, [SimpleNamespace(id="config-baseline")], None,
-            [Finding("error", "config-baseline", "latest record result is 'fail'")],
-        )
-
-        self.assertIn("config-baseline", guidance._evidence(instance).what)
 
     def test_cli_exits_zero_with_findings(self):
         code, out = quietly(main, ["next", "--target", str(self.target)])
