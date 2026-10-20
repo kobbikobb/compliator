@@ -52,6 +52,24 @@ class TestFramework(unittest.TestCase):
         self.assertEqual(text.count("SOC 2 Trust Services Criteria |"), 1)
         self.assertIn("ISO/IEC 27001:2022 |", text)
 
+    def test_rerunning_the_same_choice_changes_nothing(self):
+        quietly(run_framework, self.target, "both")
+        before = (self.target / "isms/frameworks.md").read_text(encoding="utf-8")
+        _, out = quietly(run_framework, self.target, "both")
+
+        self.assertEqual((self.target / "isms/frameworks.md").read_text(encoding="utf-8"), before)
+        self.assertIn("Already declared", out)
+
+    def test_a_note_without_a_table_gets_one_and_keeps_its_text(self):
+        notes = self.target / "isms/frameworks.md"
+        notes.parent.mkdir(parents=True)
+        notes.write_text("# Frameworks\n\nMy own notes.", encoding="utf-8")
+        quietly(run_framework, self.target, "soc2")
+
+        text = notes.read_text(encoding="utf-8")
+        self.assertIn("My own notes.", text)
+        self.assertEqual([f.key for f in declared_frameworks(self.target)], ["soc2"])
+
     def test_declared_framework_is_not_asked_again_by_init(self):
         quietly(run_framework, self.target, "soc2")
         _, out = quietly(run, self.target, ask=Ask(["n"] * 20))  # decline every document
@@ -83,18 +101,23 @@ class TestNext(unittest.TestCase):
         quietly(run_framework, self.target, "iso_27001_2022")
         self.assertIn("scope", next_step(self.target).what)
 
-        (self.target / "isms/scope.md").write_text("---\nid: S\ntitle: t\nowner: o\nstatus: draft\n---\n", encoding="utf-8")
+        isms = self.target / "isms"
+        (isms / "scope.md").write_text("---\nid: S\ntitle: t\nowner: o\nstatus: draft\n---\n", encoding="utf-8")
+        self.assertIn("POL-001", next_step(self.target).what)
+
+        (isms / "policies").mkdir()
+        for name in ("POL-001-a.md", "POL-002-b.md"):
+            (isms / "policies" / name).write_text("---\nid: P\n---\n", encoding="utf-8")
         self.assertIn("risks", next_step(self.target).what)
 
     def test_evidence_finding_for_a_control_named_config_something_is_reported(self):
-        from datetime import date
         from types import SimpleNamespace
 
         from compliator import guidance
         from compliator.status import Finding
 
         instance = guidance._Instance(
-            self.target, date.today(), [SimpleNamespace(id="config-baseline")], None, self.target,
+            self.target, [SimpleNamespace(id="config-baseline")], None,
             [Finding("error", "config-baseline", "latest record result is 'fail'")],
         )
 

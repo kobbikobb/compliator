@@ -10,11 +10,11 @@ PYTHONPATH := src
 
 .DEFAULT_GOAL := next
 
-# Every recipe runs the engine through this, quietly: the output is the tool's.
+# Runs the engine quietly (@).
 COMPLIATOR := @PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m compliator
 
 ##@ Start here
-# `##` is a target's doc and `##@` starts a section of the help.
+# ## documents a target; ##@ starts a help section.
 help: ## List every target, in the order you use them
 	@awk 'BEGIN {FS = ":.*?## "} /^##@/ {printf "\n%s\n", substr($$0, 5)} /^[a-zA-Z0-9_-]+:.*?## / {printf "  make %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo
@@ -24,12 +24,11 @@ next: ## Name the one thing to do now (the default target)
 
 install: ## Create .venv and install the one runtime dependency (PyYAML)
 	@python3 -m venv .venv
-	@.venv/bin/python -m pip install --quiet -r requirements.txt
-	@.venv/bin/python -c "import yaml; print('installed: PyYAML', yaml.__version__)"
+	@$(VENV_PY) -m pip install --quiet -r requirements.txt
+	@$(VENV_PY) -c "import yaml; print('installed: PyYAML', yaml.__version__)"
 	@echo "Next: make next"
 
 ##@ Set up (in order)
-# FRAMEWORK=iso_27001_2022|soc2|both|none skips the menu.
 framework: ## Declare the framework(s) you orient to; FRAMEWORK=... skips the menu
 	$(COMPLIATOR) framework $(if $(FRAMEWORK),--set $(FRAMEWORK))
 
@@ -37,8 +36,7 @@ init: ## Scaffold scope, risks, the SoA and policies, one document at a time
 	$(COMPLIATOR) init $(if $(FRAMEWORK),--framework $(FRAMEWORK))
 
 ##@ Check for gaps
-# Exit 1 means findings, which a young instance is expected to have: only a
-# refusal (exit 2) fails the target. `make check` is the strict version.
+# Exit 1 (findings) is expected on a young instance; only exit 2 fails.
 status: ## Report every gap: unfinished documents, broken links, stale evidence
 	@PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m compliator status || [ $$? -eq 1 ]
 

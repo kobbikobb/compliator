@@ -1,13 +1,6 @@
-"""What should happen next?
+"""The first unmet step in the order an ISMS is built; read-only, exit 0.
 
-``compliator status`` lists everything outstanding. This names the one thing to
-do now, following the order an ISMS is built in: framework, scope, risks, the
-statement of applicability, policies, finishing the documents, controls, evidence.
-
-Read-only, and the exit code is always 0 - it is advice, not a gate. The
-documents and evidence are judged by the same checks ``status`` uses, so the two
-cannot disagree about what is wrong; this only picks the first thing and says
-what to do about it.
+Findings come from the same checks `status` uses.
 """
 
 from __future__ import annotations
@@ -35,10 +28,8 @@ class Step:
 @dataclass
 class _Instance:
     target: Path
-    today: date
     controls: list[Any]
     config_error: str | None
-    evidence_root: Path
     findings: list[Finding]
 
 
@@ -50,7 +41,7 @@ def _framework(inst: _Instance) -> Step | None:
         return None
     return Step(
         "No framework declared.",
-        "The framework decides which statement of applicability you write and which requirements you work toward.",
+        "It decides whether you write a statement of applicability. You can change it later.",
         "make framework   (or: make framework FRAMEWORK=iso_27001_2022|soc2|both)",
     )
 
@@ -76,10 +67,23 @@ def _soa(inst: _Instance) -> Step | None:
         if framework.soa_path and not (inst.target / framework.soa_path).is_file():
             return Step(
                 f"No statement of applicability for {framework.title}.",
-                "It records which requirements apply, why, and what covers them - the first thing an auditor reads.",
+                "It records which requirements apply, why, and what covers them.",
                 f"make framework FRAMEWORK={framework.key}",
             )
     return None
+
+
+def _foundation_policies(inst: _Instance) -> Step | None:
+    existing = {path.name.split("-", 2)[1] for path in (inst.target / "isms" / "policies").glob("POL-*.md")}
+    missing = [number for number in (1, 2) if f"{number:03d}" not in existing]
+    if not missing:
+        return None
+    return Step(
+        "Information security and risk management policies not written: "
+        + ", ".join(f"POL-{number:03d}" for number in missing) + ".",
+        "They set the commitment and the method the risk assessment follows.",
+        "make init",
+    )
 
 
 def _policies(inst: _Instance) -> Step | None:
@@ -111,7 +115,7 @@ def _document_errors(inst: _Instance) -> Step | None:
     if not errors:
         return None
     first = min(errors, key=lambda f: _document_order(f.subject))
-    return Step(f"{first.subject}: {first.message}.", "A document that claims more than it can back is worse than a missing one.", f"edit {first.subject}")
+    return Step(f"{first.subject}: {first.message}.", "A document that claims more than it can back is not evidence.", f"edit {first.subject}")
 
 
 def _unfinished(inst: _Instance) -> Step | None:
@@ -156,7 +160,7 @@ def _remaining(inst: _Instance) -> Step | None:
     if not warnings:
         return None
     first = warnings[0]
-    return Step(f"{first.subject}: {first.message}.", "Left alone, this becomes a gap.", "make status")
+    return Step(f"{first.subject}: {first.message}.", "Unresolved, this stays a finding in `make status`.", "make status")
 
 
 def _ready(inst: _Instance) -> Step | None:
@@ -170,6 +174,7 @@ def _ready(inst: _Instance) -> Step | None:
 CHECKS: tuple[Check, ...] = (
     _framework,
     _scope,
+    _foundation_policies,
     _risks,
     _soa,
     _policies,
@@ -193,7 +198,7 @@ def _load(target: Path, config_dir: Path | None, evidence_dir: Path | None, toda
         config_error = str(exc)
     _, findings = check_documents(target, {control.id for control in controls}, today)
     findings = findings + check_evidence(evidence_root, controls, today)
-    return _Instance(target, today, controls, config_error, evidence_root, findings)
+    return _Instance(target, controls, config_error, findings)
 
 
 def next_step(
@@ -231,7 +236,7 @@ def run(
 
     step = next_step(target, config_dir=config_dir, evidence_dir=evidence_dir, today=today)
     if step is None:
-        print("Nothing outstanding. Keep evidence current (`make collect`) and reviews on cadence.", file=out)
+        print("No findings. That is not conformance: approvals, internal audit and management review are still yours to do.", file=out)
         return 0
     print(f"Next: {step.what}", file=out)
     print(f"  Why: {step.why}", file=out)

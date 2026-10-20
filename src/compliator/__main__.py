@@ -9,8 +9,8 @@ Commands:
     list      list configured controls and their checks
     init      scaffold an instance's ISMS documents, one item at a time
     status    report whether the documents and the evidence are still true
-    framework declare the framework(s) and write what a declaration needs
-    next      name the one thing to do now (read-only, always exits 0)
+    framework declare framework(s)
+    next      name the next step
 """
 
 from __future__ import annotations
@@ -70,12 +70,12 @@ def _build_parser() -> argparse.ArgumentParser:
         help="iso_27001_2022, soc2, both or none; skips the framework question",
     )
 
-    p_framework = sub.add_parser("framework", help="declare the framework(s) the instance orients to")
+    p_framework = sub.add_parser("framework", help="declare framework(s)")
     p_framework.add_argument("--target", default=".", help="instance root (default: .)")
     p_framework.add_argument("--set", dest="choice", default=None, metavar="NAME", help="iso_27001_2022, soc2, both or none")
     p_framework.add_argument("--dry-run", action="store_true", help="print what would be written, write nothing")
 
-    p_next = sub.add_parser("next", help="name the one thing to do now (read-only)")
+    p_next = sub.add_parser("next", help="name the next step")
     p_next.add_argument("--target", default=".", help="instance root to inspect (default: .)")
     p_next.add_argument("--config-dir", default=None)
     p_next.add_argument("--evidence-dir", default=None)

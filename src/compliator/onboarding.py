@@ -155,7 +155,7 @@ FRAMEWORK_MENU = (
 
 
 def declared_frameworks(target: Path) -> tuple[Framework, ...]:
-    """Frameworks an instance already records: a row in frameworks.md, or its SoA file."""
+    """Frameworks with a row in frameworks.md or an SoA file."""
     notes = target / FRAMEWORKS_PATH
     text = notes.read_text(encoding="utf-8") if notes.is_file() else ""
     found = []
@@ -168,7 +168,6 @@ def declared_frameworks(target: Path) -> tuple[Framework, ...]:
 
 
 def _ask_framework(ask: "Ask") -> tuple[Framework, ...]:
-    """A numbered menu; a number or a name is accepted."""
     print("Which framework are you orienting to? It decides which statement of")
     print("applicability you write; you can add another later with `make framework`.")
     for number, _, label in FRAMEWORK_MENU:
@@ -295,7 +294,6 @@ def _plan_interactively(ask: Ask, pending: set[str], known: tuple[Framework, ...
         what_it_does = ask.text("  What the business does, in one line", TODO)
         owner = ask.text("  Owner (a role or an address)", DEFAULT_OWNER)
 
-    # A framework already declared or passed in is not asked about again.
     frameworks = known if known is not None else _ask_framework(ask)
     framework_paths = {framework.soa_path for framework in frameworks if framework.soa_path}
 
@@ -572,10 +570,7 @@ NO_FRAMEWORK_ROW = "| — | — | none declared yet |"
 
 
 def _declare_in_notes(target: Path, frameworks: Sequence[Framework], dry_run: bool) -> bool:
-    """Add rows for frameworks not yet recorded to an existing frameworks.md.
-
-    Only appends: existing rows, and everything else in the file, are kept.
-    """
+    """Append rows for unrecorded frameworks; existing content is kept."""
     path = target / FRAMEWORKS_PATH
     text = path.read_text(encoding="utf-8")
     recorded = {framework.key for framework in declared_frameworks(target)}
@@ -609,12 +604,7 @@ def run_framework(
     ask: Ask | None = None,
     today: str | None = None,
 ) -> int:
-    """Declare the framework(s), and write what a declaration needs.
-
-    Writes ``isms/frameworks.md`` and, where a framework requires one, its
-    statement of applicability. Never overwrites. With no choice it reports what
-    is declared, or asks when there is a terminal and nothing declared yet.
-    """
+    """Declare framework(s) and write their SoA. Never overwrites."""
     if target.exists() and not target.is_dir():
         raise OnboardingError(f"target is not a directory: {target}")
     declared = declared_frameworks(target)
