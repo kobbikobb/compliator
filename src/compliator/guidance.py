@@ -9,7 +9,7 @@ import sys
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import Any, Callable, TextIO
+from typing import Any, Callable, Optional, TextIO
 
 from .catalog import POLICIES, RISK_PATH, SCOPE_PATH, SUGGESTED_START
 from .config import load_project
@@ -33,7 +33,7 @@ class _Snapshot:
     findings: list[Finding]
 
 
-Check = Callable[[_Snapshot], Step | None]
+Check = Callable[[_Snapshot], Optional[Step]]
 
 
 def _framework(inst: _Snapshot) -> Step | None:
