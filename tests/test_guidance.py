@@ -86,6 +86,20 @@ class TestNext(unittest.TestCase):
         (self.target / "isms/scope.md").write_text("---\nid: S\ntitle: t\nowner: o\nstatus: draft\n---\n", encoding="utf-8")
         self.assertIn("risks", next_step(self.target).what)
 
+    def test_evidence_finding_for_a_control_named_config_something_is_reported(self):
+        from datetime import date
+        from types import SimpleNamespace
+
+        from compliator import guidance
+        from compliator.status import Finding
+
+        instance = guidance._Instance(
+            self.target, date.today(), [SimpleNamespace(id="config-baseline")], None, self.target,
+            [Finding("error", "config-baseline", "latest record result is 'fail'")],
+        )
+
+        self.assertIn("config-baseline", guidance._evidence(instance).what)
+
     def test_cli_exits_zero_with_findings(self):
         code, out = quietly(main, ["next", "--target", str(self.target)])
 

@@ -139,7 +139,8 @@ def _controls(inst: _Instance) -> Step | None:
 
 
 def _evidence(inst: _Instance) -> Step | None:
-    evidence = [f for f in inst.findings if not f.subject.startswith(("isms/", "config"))]
+    control_ids = {control.id for control in inst.controls}
+    evidence = [f for f in inst.findings if f.subject in control_ids]
     if not evidence:
         return None
     errors = [f for f in evidence if f.level == "error"]
