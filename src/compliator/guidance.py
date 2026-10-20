@@ -15,7 +15,7 @@ from .catalog import POLICIES, RISK_PATH, SCOPE_PATH, SUGGESTED_START
 from .config import load_project
 from .errors import CompliatorError, ConfigError
 from .frameworks import declared_frameworks
-from .status import Finding, check_documents, check_evidence
+from .status import Finding, check_coverage, check_documents, check_evidence
 
 
 @dataclass(frozen=True)
@@ -142,6 +142,18 @@ def _controls(inst: _Snapshot) -> Step | None:
     )
 
 
+def _coverage(inst: _Snapshot) -> Step | None:
+    gaps = [f for f in inst.findings if f.kind == "coverage"]
+    if not gaps:
+        return None
+    more = f" ({len(gaps) - 1} more uncovered)" if len(gaps) > 1 else ""
+    return Step(
+        f"{gaps[0].subject}: {gaps[0].message}{more}.",
+        "A requirement marked applicable needs a control, or a documented reason it has none.",
+        "add the id to `mappings` in a control under config/controls/, or write the control",
+    )
+
+
 def _evidence(inst: _Snapshot) -> Step | None:
     evidence = [f for f in inst.findings if f.kind == "evidence"]
     if not evidence:
@@ -180,6 +192,7 @@ CHECKS: tuple[Check, ...] = (
     _document_errors,
     _unfinished,
     _controls,
+    _coverage,
     _evidence,
     _remaining,
     _awaiting_approval,
@@ -190,13 +203,15 @@ def _load(target: Path, config_dir: Path | None, evidence_dir: Path | None, toda
     config_path = config_dir or target / "config"
     evidence_root = evidence_dir or target / "evidence"
     controls: list[Any] = []
+    catalogs = {}
     config_error = None
     try:
-        controls = list(load_project(config_path).controls)
+        project = load_project(config_path)
+        controls, catalogs = list(project.controls), project.catalogs
     except ConfigError as exc:
         config_error = str(exc)
     _, findings = check_documents(target, {control.id for control in controls}, today)
-    findings = findings + check_evidence(evidence_root, controls, today)
+    findings = findings + check_evidence(evidence_root, controls, today) + check_coverage(target, controls, catalogs)
     return _Snapshot(target, controls, config_error, findings)
 
 

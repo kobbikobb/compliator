@@ -205,9 +205,9 @@ control:
     ...
   owner: security@example.invalid
   frequency: 1d             # evidence older than this is flagged stale
-  frameworks:               # free text today; see isms/frameworks.md
-    soc2: "CC6.6 - ..."
-    iso_27001: "A.8.16 - ..."
+  mappings:                 # ids must exist in frameworks/<framework>.yaml
+    soc2: [CC6.1]
+    iso_27001_2022: [A.8.5]
 
 source: github_org          # must exist in config/sources.yaml
 
@@ -221,6 +221,12 @@ checks:
       op: all_equal
       value: true
 ```
+
+`frameworks/<id>.yaml` lists a framework's requirement ids with our own one-line
+summaries (no standard text). An unknown framework or id fails the load. A
+catalog marked `complete: true` lets `status` and `next` report declared
+requirements that no control maps to; the catalogs shipped here are partial, so
+they report nothing. The old free-text `frameworks:` mapping still loads.
 
 Operators — population: `all_equal`, `exists`, `date_within_days`,
 `min_gte`, `count_gte`; scalar: `equals`, `gte`, `exists`, `count_gte`. Misuse

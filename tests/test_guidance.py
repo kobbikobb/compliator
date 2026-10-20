@@ -6,8 +6,10 @@ from pathlib import Path
 
 from compliator.__main__ import main
 from compliator.guidance import next_step
+from compliator.config import load_project
 from compliator.frameworks import declared_frameworks
 from compliator.onboarding import Ask, run, run_framework
+from compliator.status import check_coverage
 
 
 def quietly(function, *args, **kwargs):
@@ -123,6 +125,42 @@ class TestNext(unittest.TestCase):
 
         self.assertEqual(code, 0)
         self.assertIn("Next:", out)
+
+
+class TestCoverage(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.target = Path(self._tmp.name)
+        (self.target / "config/controls").mkdir(parents=True)
+        (self.target / "frameworks").mkdir()
+        (self.target / "config/sources.yaml").write_text(
+            "sources:\n  s:\n    plugin: mock_github\n    options: {fixture: f.json}\n", encoding="utf-8"
+        )
+        (self.target / "config/controls/c.yaml").write_text(
+            "control:\n  id: test-c\n  title: T\n  statement: S\n  owner: o\n  frequency: 1d\n"
+            "  mappings:\n    soc2: [R1]\nsource: s\nchecks:\n  - description: d\n    must: {path: a, op: equals, value: 1}\n",
+            encoding="utf-8",
+        )
+        quietly(run_framework, self.target, "soc2")
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _catalog(self, complete):
+        (self.target / "frameworks/soc2.yaml").write_text(
+            f"framework: soc2\ntitle: SOC 2\nversion: '1'\ncomplete: {complete}\nrequirements:\n  R1: one\n  R2: two\n",
+            encoding="utf-8",
+        )
+        project = load_project(self.target / "config")
+        return check_coverage(self.target, project.controls, project.catalogs)
+
+    def test_a_complete_catalog_reports_the_uncovered_requirement(self):
+        findings = self._catalog("true")
+
+        self.assertEqual([f.subject for f in findings], ["soc2:R2"])
+
+    def test_a_partial_catalog_reports_nothing(self):
+        self.assertEqual(self._catalog("false"), [])
 
 
 if __name__ == "__main__":

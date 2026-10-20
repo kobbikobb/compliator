@@ -1,0 +1,12 @@
+framework: soc2
+title: SOC 2 Trust Services Criteria
+version: "2017 TSC, 2022 revised points of focus"
+complete: false
+requirements:
+  CC1.5: Individuals are held accountable for their security responsibilities
+  CC6.1: Logical access to systems and data is restricted and protected
+  CC6.2: Users are registered and authorised, and credentials are removed when no longer needed
+  CC6.8: Unauthorised or malicious software is prevented or detected
+  CC7.2: Systems are monitored for anomalies that indicate security events
+  CC8.1: Changes are authorised, tested and approved before release
+  CC9.2: Risk from vendors and business partners is assessed and managed
