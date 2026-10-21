@@ -267,22 +267,30 @@ class TestOnboarding(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("answers file not found", err.getvalue())
 
-    def test_interactive_run_asks_one_document_at_a_time(self):
+    def test_interactive_run_derives_the_policies_from_a_few_facts(self):
         script = ["y", "Acme SaaS Co.", "invoicing", "founder@example.invalid", "soc2", "y"]
-        script += ["y", "n", "y"]                     # identity provider, contractors, customer data
-        script += ["y", "y"]                          # POL-001, POL-002 are suggested
-        script += ["y"] + ["n"] * 9                   # POL-003 only, then decline 004-012
-        script += ["y", "Losing the cloud account"]   # the first risk
+        script += ["y", "n", "y", "n", "n", "n"]  # idp, contractors, customer data, staff, suppliers, office
+        script += [""]                            # accept the derived set
 
         code, out = self._run(ask=Ask(script))
 
         self.assertEqual(code, 0)
         self.assertIn("Create isms/scope.md", out)
+        self.assertIn("Not needed for you: Acceptable Use, Supplier Management, HR Security, Physical Security", out)
         self.assertTrue((self.target / "isms/policies/POL-003-access-control.md").is_file())
-        self.assertFalse((self.target / "isms/policies/POL-004-change-management.md").exists())
+        self.assertFalse((self.target / "isms/policies/POL-005-acceptable-use.md").exists())
         self.assertTrue((self.target / "isms/risks/RISK-001-lost-access.md").is_file())
         _, body, _ = read_document(self.target / "isms/scope.md")
         self.assertIn("Acme SaaS Co.", body)
+
+    def test_the_answers_can_pull_in_more_policies_or_be_chosen_one_by_one(self):
+        script = ["n", "soc2", "y"] + ["y"] * 3 + ["y", "y", "y"] + ["c"]
+        script += ["n", "n", "y"] + ["n"] * 13
+
+        self._run(ask=Ask(script))
+
+        self.assertTrue((self.target / "isms/policies/POL-003-access-control.md").is_file())
+        self.assertFalse((self.target / "isms/policies/POL-001-information-security.md").exists())
 
     def test_a_script_that_runs_out_is_reported(self):
         with self.assertRaises(OnboardingError) as caught:

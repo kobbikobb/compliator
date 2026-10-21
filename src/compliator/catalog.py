@@ -126,6 +126,7 @@ class Question:
     key: str
     prompt: str
     default: bool
+    adds: tuple[int, ...] = ()  # policies drafted when the answer is yes
 
 
 # Facts about the organisation that decide which default statements apply.
@@ -133,6 +134,9 @@ QUESTIONS: tuple[Question, ...] = (
     Question("idp", "Do you use a central identity provider or SSO (Google Workspace, Okta, Entra)?", True),
     Question("contractors", "Do contractors or other third parties get access to your systems?", False),
     Question("customer_data", "Do you hold customer data in your systems?", True),
+    Question("staff", "Do you have employees or regular contractors?", True, adds=(5, 11)),
+    Question("suppliers", "Do suppliers or SaaS tools process your or your customers' data?", True, adds=(9,)),
+    Question("office", "Do you have an office or other physical site to protect?", False, adds=(12,)),
 )
 
 
