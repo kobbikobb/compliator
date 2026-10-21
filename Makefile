@@ -29,7 +29,7 @@ install: ## Create .venv and install the one runtime dependency (PyYAML)
 	@echo "Next: make next"
 
 ##@ Set up (in order)
-framework: ## Declare the framework(s) you orient to; FRAMEWORK=... skips the menu
+framework: ## Choose or add a framework (a short menu); FRAMEWORK=... skips it
 	$(COMPLIATOR) framework $(if $(FRAMEWORK),--set $(FRAMEWORK))
 
 init: ## Scaffold scope, risks, the SoA and policies, one document at a time
