@@ -61,8 +61,8 @@ def _risks(inst: _Snapshot) -> Step | None:
         return None
     return Step(
         "No risks recorded.",
-        "Risks decide which requirements apply and which policies you need. List the 3-5 that would hurt most.",
-        "make new-risk   (one line on what could go wrong; repeat for each risk)",
+        "Risks decide which requirements apply and which policies you need.",
+        "make new-risk   (a few plain-language questions; no compliance knowledge needed)",
     )
 
 
@@ -218,8 +218,8 @@ def _awaiting_approval(inst: _Snapshot) -> Step | None:
 CHECKS: tuple[Check, ...] = (
     _framework,
     _scope,
-    _foundation_policies,
     _risks,
+    _foundation_policies,
     _soa,
     _policies,
     _document_errors,

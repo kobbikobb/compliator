@@ -102,7 +102,9 @@ class TestFramework(unittest.TestCase):
 
     def test_declared_framework_is_not_asked_again_by_init(self):
         quietly(run_framework, self.target, "soc2")
-        _, out = quietly(run, self.target, ask=Ask(["n"] * 20))  # decline every document
+        _, out = quietly(
+            run, self.target, ask=Ask(["n"] * 9 + [""] + ["n"] * 20)
+        )  # no risks, no documents
 
         self.assertNotIn("Which framework", out)
 
@@ -135,12 +137,11 @@ class TestNext(unittest.TestCase):
         (isms / "scope.md").write_text(
             "---\nid: S\ntitle: t\nowner: o\nstatus: draft\n---\n", encoding="utf-8"
         )
-        self.assertIn("POL-001", next_step(self.target).what)
-
-        (isms / "policies").mkdir()
-        for name in ("POL-001-a.md", "POL-002-b.md"):
-            (isms / "policies" / name).write_text("---\nid: P\n---\n", encoding="utf-8")
         self.assertIn("risks", next_step(self.target).what)
+
+        (isms / "risks").mkdir()
+        (isms / "risks" / "RISK-001-a.md").write_text("---\nid: R\n---\n", encoding="utf-8")
+        self.assertIn("POL-001", next_step(self.target).what)
 
     def test_unfinished_step_quotes_the_first_open_line(self):
         from compliator.guidance import _Snapshot, _unfinished

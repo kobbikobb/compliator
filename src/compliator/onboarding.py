@@ -327,7 +327,13 @@ def _plan_from_answers(answers: dict[str, Any], create_all: bool) -> _Plan:
     )
 
 
-def _plan_interactively(ask: Ask, pending: set[str], known: tuple[Framework, ...] | None) -> _Plan:
+def _plan_interactively(
+    ask: Ask,
+    pending: set[str],
+    known: tuple[Framework, ...] | None,
+    target: Path,
+    today: str | None = None,
+) -> _Plan:
     """One question at a time, in the order the documents depend on each other."""
     print()
     create: dict[str, bool] = {}
@@ -342,6 +348,9 @@ def _plan_interactively(ask: Ask, pending: set[str], known: tuple[Framework, ...
         organization = ask.text("  Organisation name", DEFAULT_ORGANIZATION)
         what_it_does = ask.text("  What the business does, in one line", TODO)
         owner = ask.text("  Owner (a role or an address)", DEFAULT_OWNER)
+
+    if not list((target / RISKS_DIR).glob("RISK-*.md")):
+        discover_risks(target, ask, owner=owner, today=today)
 
     frameworks = known if known is not None else _ask_framework(ask)
     framework_paths = {framework.soa_path for framework in frameworks if framework.soa_path}
@@ -580,7 +589,7 @@ def run(
             raise OnboardingError(
                 "standard input is not a terminal; pass --answers FILE for a non-interactive run, or --dry-run"
             )
-        plan = _plan_interactively(ask or Ask(), set(missing), known)
+        plan = _plan_interactively(ask or Ask(), set(missing), known, target, today)
 
     stamp = today or _date.today().isoformat()
 
@@ -693,27 +702,51 @@ def _next_risk_number(risks_dir: Path) -> int:
     return max(numbers, default=0) + 1
 
 
-def run_new_risk(
-    target: Path,
-    title: str | None = None,
-    *,
-    owner: str = DEFAULT_OWNER,
-    dry_run: bool = False,
-    ask: Ask | None = None,
-    today: str | None = None,
-) -> int:
-    """Write the next RISK-NNN skeleton. Never overwrites; ratings stay TODO."""
-    if target.exists() and not target.is_dir():
-        raise OnboardingError(f"target is not a directory: {target}")
-    if not title:
-        if ask is None and not sys.stdin.isatty():
-            raise OnboardingError(
-                'standard input is not a terminal; pass --title "what could go wrong"'
-            )
-        title = (ask or Ask()).text("What could go wrong, in one line", "").strip()
-    if not title:
-        raise OnboardingError("a risk needs a one-line scenario")
+RISK_PROMPTS: tuple[tuple[str, str, bool], ...] = (
+    (
+        "Could someone get into a staff or admin account with a stolen or guessed password?",
+        "Someone gets into a staff or admin account with a stolen or guessed password",
+        True,
+    ),
+    (
+        "Could a laptop or phone holding company data be lost or stolen?",
+        "A laptop or phone holding company data is lost or stolen",
+        True,
+    ),
+    (
+        "Could customer data reach people who should not see it?",
+        "Customer data is exposed to people who should not see it",
+        True,
+    ),
+    (
+        "Could you lose data with no working backup to restore from?",
+        "Data is lost and there is no working backup to restore from",
+        True,
+    ),
+    (
+        "Could a mistaken change take your service down?",
+        "A mistaken change takes the service down",
+        True,
+    ),
+    (
+        "Could someone who runs something critical leave or be unavailable?",
+        "A person who runs something critical leaves or is unavailable and nobody else can cover",
+        False,
+    ),
+    (
+        "Could staff fall for a phishing email or a payment fraud attempt?",
+        "Staff fall for a phishing email or a payment fraud attempt",
+        False,
+    ),
+    (
+        "Could a supplier or contractor you depend on fail or be breached?",
+        "A supplier or contractor we depend on fails or is breached",
+        False,
+    ),
+)
 
+
+def _write_risk(target: Path, title: str, owner: str, dry_run: bool, today: str | None) -> str:
     risks_dir = target / RISKS_DIR
     risk_id = f"RISK-{_next_risk_number(risks_dir):03d}"
     slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:40].strip("-") or "risk"
@@ -734,6 +767,61 @@ def run_new_risk(
         _render("risk.md", title=title, owner=owner, date=today or _date.today().isoformat()),
     )
     _emit(target, path, contents, dry_run, Result())
+    return path
+
+
+def discover_risks(
+    target: Path,
+    ask: Ask,
+    *,
+    owner: str = DEFAULT_OWNER,
+    dry_run: bool = False,
+    today: str | None = None,
+) -> list[str]:
+    """Plain-language questions that turn into risk skeletons. Ratings stay TODO."""
     print()
-    print(f"Next: fill in {path}, or `make new-risk` for another. Then `make next`.")
+    print("Risks come first: they decide which policies you need and what those say.")
+    print("A risk is something that could go wrong. Answer for your organisation; no")
+    print("compliance knowledge needed. You rate and treat each one afterwards.")
+    print()
+    paths = []
+    for question, title, default in RISK_PROMPTS:
+        if ask.yes(question, default=default):
+            paths.append(_write_risk(target, title, owner, dry_run, today))
+    print("Anything else that worries you? One line each, blank to finish.")
+    while title := ask.text("  What could go wrong", "").strip():
+        paths.append(_write_risk(target, title, owner, dry_run, today))
+    return paths
+
+
+def run_new_risk(
+    target: Path,
+    title: str | None = None,
+    *,
+    owner: str = DEFAULT_OWNER,
+    dry_run: bool = False,
+    ask: Ask | None = None,
+    today: str | None = None,
+) -> int:
+    """Write risk skeletons: one from a title, or several from guided questions."""
+    if target.exists() and not target.is_dir():
+        raise OnboardingError(f"target is not a directory: {target}")
+    if title is not None and not title.strip():
+        raise OnboardingError("a risk needs a one-line scenario")
+    if title:
+        paths = [_write_risk(target, title.strip(), owner, dry_run, today)]
+    else:
+        if ask is None and not sys.stdin.isatty():
+            raise OnboardingError(
+                'standard input is not a terminal; pass --title "what could go wrong"'
+            )
+        paths = discover_risks(target, ask or Ask(), owner=owner, dry_run=dry_run, today=today)
+    print()
+    if not paths:
+        print("No risks added. `make new-risk` asks again.")
+        return 0
+    print(
+        f"{len(paths)} risk(s) drafted. Open each one: the ratings and treatment are yours to set."
+    )
+    print("Then `make next`.")
     return 0
