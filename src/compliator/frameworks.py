@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from .catalog import FRAMEWORKS, FRAMEWORKS_PATH, Framework
 
@@ -37,7 +37,11 @@ def declare_in_notes(target: Path, frameworks: Sequence[Framework], dry_run: boo
     new_rows = [framework_row(f) for f in frameworks if f.key not in recorded]
     if not new_rows:
         return False
-    lines = [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip() != NO_FRAMEWORK_ROW]
+    lines = [
+        line
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip() != NO_FRAMEWORK_ROW
+    ]
     header = next((i for i, line in enumerate(lines) if line.startswith("| Framework |")), None)
     if header is None:
         lines += ["", "## Declared", "", TABLE_HEADER, "| --- | --- | --- |", *new_rows]
@@ -48,5 +52,7 @@ def declare_in_notes(target: Path, frameworks: Sequence[Framework], dry_run: boo
         lines[end:end] = new_rows
     if not dry_run:
         path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"  {'would update' if dry_run else 'updated'}    {FRAMEWORKS_PATH}  (+{len(new_rows)} framework row(s))")
+    print(
+        f"  {'would update' if dry_run else 'updated'}    {FRAMEWORKS_PATH}  (+{len(new_rows)} framework row(s))"
+    )
     return True

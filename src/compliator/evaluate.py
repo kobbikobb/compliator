@@ -29,9 +29,7 @@ from typing import Any
 
 from .errors import CompliatorError, ConfigError, EmptyPopulationError
 
-POPULATION_OPS = frozenset(
-    {"all_equal", "exists", "date_within_days", "min_gte", "count_gte"}
-)
+POPULATION_OPS = frozenset({"all_equal", "exists", "date_within_days", "min_gte", "count_gte"})
 SCALAR_OPS = frozenset({"equals", "gte", "exists", "count_gte"})
 ALL_OPS = POPULATION_OPS | SCALAR_OPS
 OPS_REQUIRING_VALUE = ALL_OPS - {"exists"}
@@ -114,7 +112,9 @@ class CheckResult:
         return out
 
 
-def _resolve_population(raw: dict[str, Any], population: Population, desc: str) -> list[dict[str, Any]]:
+def _resolve_population(
+    raw: dict[str, Any], population: Population, desc: str
+) -> list[dict[str, Any]]:
     node = resolve_path(raw, population.path)
     if not isinstance(node, list):
         raise CompliatorError(
@@ -145,7 +145,11 @@ def _eval_population_op(
     if op == "all_equal":
         observed = values
         bad = [v for v in values if v != must.value]
-        return (not bad, observed, "" if not bad else f"{len(bad)} of {len(values)} items != {must.value!r}")
+        return (
+            not bad,
+            observed,
+            "" if not bad else f"{len(bad)} of {len(values)} items != {must.value!r}",
+        )
     if op == "exists":
         observed = values
         missing = [i for i, v in enumerate(values) if v is None or v == ""]
@@ -156,21 +160,21 @@ def _eval_population_op(
         )
     if op == "date_within_days":
         observed = values
-        bad: list[str] = []
+        late: list[str] = []
         for i, v in enumerate(values):
             try:
                 parsed = _parse_date(v, f"check '{desc}' item {i}")
             except CompliatorError as exc:
                 return False, observed, str(exc)
             if parsed is None:
-                bad.append(f"item {i}: null date")
+                late.append(f"item {i}: null date")
                 continue
             delta = (as_of - parsed).days
             if delta < 0:
-                bad.append(f"item {i}: {parsed.isoformat()} is in the future")
+                late.append(f"item {i}: {parsed.isoformat()} is in the future")
             elif delta > must.value:
-                bad.append(f"item {i}: {parsed.isoformat()} is {delta}d old (max {must.value})")
-        return (not bad, observed, "" if not bad else "; ".join(bad))
+                late.append(f"item {i}: {parsed.isoformat()} is {delta}d old (max {must.value})")
+        return (not late, observed, "" if not late else "; ".join(late))
     if op == "min_gte":
         observed = values
         if any(v is None for v in values):
@@ -185,9 +189,7 @@ def _eval_population_op(
     raise ConfigError(f"unknown operator: {op}")  # pragma: no cover - validated at load
 
 
-def _eval_scalar_op(
-    raw: dict[str, Any], must: Must, desc: str
-) -> tuple[bool, Any, str]:
+def _eval_scalar_op(raw: dict[str, Any], must: Must, desc: str) -> tuple[bool, Any, str]:
     op = must.op
     resolved = resolve_path(raw, must.path)
     if op == "equals":
@@ -231,9 +233,7 @@ def evaluate_check(raw: dict[str, Any], check: Any, as_of: date) -> CheckResult:
                 f"count={count}, required>={check.must.value}",
             )
         values = [resolve_path(item, check.must.path) for item in items]
-        passed, observed, detail = _eval_population_op(
-            values, check.must, as_of, check.description
-        )
+        passed, observed, detail = _eval_population_op(values, check.must, as_of, check.description)
         return CheckResult(
             check.description, population, check.must, len(items), observed, passed, detail
         )

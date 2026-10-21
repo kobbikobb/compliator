@@ -36,9 +36,7 @@ class HRRosterPlugin(FileFixtureMixin, SourcePlugin):
             raise PluginError(f"{path}: empty CSV (unexpected shape)")
         missing = [col for col in REQUIRED_COLUMNS if col not in reader.fieldnames]
         if missing:
-            raise PluginError(
-                f"{path}: CSV missing required column(s): {', '.join(missing)}"
-            )
+            raise PluginError(f"{path}: CSV missing required column(s): {', '.join(missing)}")
         employees = []
         for row_num, row in enumerate(reader, start=2):
             extra = row.pop("__extra_columns__", None)
@@ -52,7 +50,11 @@ class HRRosterPlugin(FileFixtureMixin, SourcePlugin):
             )
         if not employees:
             raise PluginError(f"{path}: CSV contains no data rows")
-        return {"employees": employees, "row_count": len(employees), "columns": list(reader.fieldnames)}
+        return {
+            "employees": employees,
+            "row_count": len(employees),
+            "columns": list(reader.fieldnames),
+        }
 
     def provenance(self, options: dict[str, Any], project_root: Path) -> dict[str, Any]:
         path = self._fixture_path(options, project_root, self.name)

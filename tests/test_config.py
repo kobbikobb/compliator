@@ -5,7 +5,6 @@ from pathlib import Path
 from compliator.config import load_project
 from compliator.errors import ConfigError
 
-
 GOOD_SOURCE = """
 sources:
   dummy:
@@ -61,7 +60,9 @@ class TestConfigValidation(unittest.TestCase):
     def test_unknown_op_rejected(self):
         write(
             self.config / "controls" / "c.yaml",
-            CONTROL_TEMPLATE.format(body="must:\n      path: a\n      op: whatever\n      value: 1"),
+            CONTROL_TEMPLATE.format(
+                body="must:\n      path: a\n      op: whatever\n      value: 1"
+            ),
         )
         with self.assertRaises(ConfigError):
             self.load()
@@ -69,7 +70,9 @@ class TestConfigValidation(unittest.TestCase):
     def test_population_op_without_population_rejected(self):
         write(
             self.config / "controls" / "c.yaml",
-            CONTROL_TEMPLATE.format(body="must:\n      path: a\n      op: all_equal\n      value: 1"),
+            CONTROL_TEMPLATE.format(
+                body="must:\n      path: a\n      op: all_equal\n      value: 1"
+            ),
         )
         with self.assertRaises(ConfigError):
             self.load()
@@ -95,9 +98,9 @@ class TestConfigValidation(unittest.TestCase):
     def test_dangling_source_rejected(self):
         write(
             self.config / "controls" / "c.yaml",
-            CONTROL_TEMPLATE.format(body="must:\n      path: a\n      op: equals\n      value: 1").replace(
-                "source: dummy", "source: nope"
-            ),
+            CONTROL_TEMPLATE.format(
+                body="must:\n      path: a\n      op: equals\n      value: 1"
+            ).replace("source: dummy", "source: nope"),
         )
         with self.assertRaises(ConfigError):
             self.load()
@@ -112,9 +115,9 @@ class TestConfigValidation(unittest.TestCase):
     def test_bad_frequency_rejected(self):
         write(
             self.config / "controls" / "c.yaml",
-            CONTROL_TEMPLATE.format(body="must:\n      path: a\n      op: equals\n      value: 1").replace(
-                "frequency: 1d", "frequency: soon"
-            ),
+            CONTROL_TEMPLATE.format(
+                body="must:\n      path: a\n      op: equals\n      value: 1"
+            ).replace("frequency: 1d", "frequency: soon"),
         )
         with self.assertRaises(ConfigError):
             self.load()
@@ -122,9 +125,9 @@ class TestConfigValidation(unittest.TestCase):
     def test_missing_owner_rejected(self):
         write(
             self.config / "controls" / "c.yaml",
-            CONTROL_TEMPLATE.format(body="must:\n      path: a\n      op: equals\n      value: 1").replace(
-                "owner: o@example.invalid\n", ""
-            ),
+            CONTROL_TEMPLATE.format(
+                body="must:\n      path: a\n      op: equals\n      value: 1"
+            ).replace("owner: o@example.invalid\n", ""),
         )
         with self.assertRaises(ConfigError):
             self.load()
@@ -140,7 +143,9 @@ requirements:
   R2: second
 """
 
-MAPPED_CONTROL = CONTROL_TEMPLATE.replace('frameworks:\n    soc2: "CC1"', "mappings:\n    {mappings}")
+MAPPED_CONTROL = CONTROL_TEMPLATE.replace(
+    'frameworks:\n    soc2: "CC1"', "mappings:\n    {mappings}"
+)
 
 
 class TestMappings(unittest.TestCase):
@@ -155,7 +160,10 @@ class TestMappings(unittest.TestCase):
 
     def load(self, mappings):
         body = "must:\n      path: a\n      op: equals\n      value: 1"
-        write(self.root / "config" / "controls" / "c.yaml", MAPPED_CONTROL.format(mappings=mappings, body=body))
+        write(
+            self.root / "config" / "controls" / "c.yaml",
+            MAPPED_CONTROL.format(mappings=mappings, body=body),
+        )
         return load_project(self.root / "config")
 
     def test_mapped_ids_are_checked_and_summarised(self):

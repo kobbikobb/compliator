@@ -49,7 +49,11 @@ def _framework(inst: _Snapshot) -> Step | None:
 def _scope(inst: _Snapshot) -> Step | None:
     if (inst.target / SCOPE_PATH).is_file():
         return None
-    return Step("No scope statement.", "Nothing says what the ISMS covers, so nothing can be judged complete.", "make init")
+    return Step(
+        "No scope statement.",
+        "Nothing says what the ISMS covers, so nothing can be judged complete.",
+        "make init",
+    )
 
 
 def _risks(inst: _Snapshot) -> Step | None:
@@ -74,20 +78,25 @@ def _soa(inst: _Snapshot) -> Step | None:
 
 
 def _foundation_policies(inst: _Snapshot) -> Step | None:
-    existing = {path.name.split("-", 2)[1] for path in (inst.target / "isms" / "policies").glob("POL-*.md")}
+    existing = {
+        path.name.split("-", 2)[1] for path in (inst.target / "isms" / "policies").glob("POL-*.md")
+    }
     missing = [number for number in (1, 2) if f"{number:03d}" not in existing]
     if not missing:
         return None
     return Step(
         "Draft the foundation policies: "
-        + ", ".join(f"POL-{number:03d}" for number in missing) + ".",
+        + ", ".join(f"POL-{number:03d}" for number in missing)
+        + ".",
         "They set the commitment and the method the risk assessment follows.",
         "make init   (a few questions about your organisation, then it drafts them)",
     )
 
 
 def _policies(inst: _Snapshot) -> Step | None:
-    existing = {path.name.split("-", 2)[1] for path in (inst.target / "isms" / "policies").glob("POL-*.md")}
+    existing = {
+        path.name.split("-", 2)[1] for path in (inst.target / "isms" / "policies").glob("POL-*.md")
+    }
     by_number = {policy.number: policy for policy in POLICIES}
     wanted = [by_number[number] for number in SUGGESTED_START if f"{number:03d}" not in existing]
     if not wanted:
@@ -95,9 +104,13 @@ def _policies(inst: _Snapshot) -> Step | None:
     if len(wanted) == len(SUGGESTED_START):
         what = "No policies yet."
     else:
-        what = f"{len(wanted)} recommended policies not written: " + ", ".join(policy.id for policy in wanted[:4])
+        what = f"{len(wanted)} recommended policies not written: " + ", ".join(
+            policy.id for policy in wanted[:4]
+        )
         what += " and more." if len(wanted) > 4 else "."
-    return Step(what, "Policies are the rules the applicable requirements are met with.", "make init")
+    return Step(
+        what, "Policies are the rules the applicable requirements are met with.", "make init"
+    )
 
 
 def _document_order(subject: str) -> tuple[int, str]:
@@ -115,7 +128,11 @@ def _document_errors(inst: _Snapshot) -> Step | None:
     if not errors:
         return None
     first = min(errors, key=lambda f: _document_order(f.subject))
-    return Step(f"{first.subject}: {first.message}.", "A document that claims more than it can back is not evidence.", f"edit {first.subject}")
+    return Step(
+        f"{first.subject}: {first.message}.",
+        "A document that claims more than it can back is not evidence.",
+        f"edit {first.subject}",
+    )
 
 
 def _unfinished(inst: _Snapshot) -> Step | None:
@@ -161,9 +178,17 @@ def _evidence(inst: _Snapshot) -> Step | None:
     errors = [f for f in evidence if f.level == "error"]
     if errors:
         first = errors[0]
-        return Step(f"{first.subject}: {first.message}.", "Failing or tampered evidence is a finding in its own right.", "make verify, then fix the cause and make collect")
+        return Step(
+            f"{first.subject}: {first.message}.",
+            "Failing or tampered evidence is a finding in its own right.",
+            "make verify, then fix the cause and make collect",
+        )
     first = evidence[0]
-    return Step(f"{first.subject}: {first.message}.", "Evidence has to be collected, and kept current.", "make collect")
+    return Step(
+        f"{first.subject}: {first.message}.",
+        "Evidence has to be collected, and kept current.",
+        "make collect",
+    )
 
 
 def _remaining(inst: _Snapshot) -> Step | None:
@@ -171,7 +196,11 @@ def _remaining(inst: _Snapshot) -> Step | None:
     if not warnings:
         return None
     first = warnings[0]
-    return Step(f"{first.subject}: {first.message}.", "Unresolved, this stays a finding in `make status`.", "make status")
+    return Step(
+        f"{first.subject}: {first.message}.",
+        "Unresolved, this stays a finding in `make status`.",
+        "make status",
+    )
 
 
 def _awaiting_approval(inst: _Snapshot) -> Step | None:
@@ -179,7 +208,11 @@ def _awaiting_approval(inst: _Snapshot) -> Step | None:
     if not drafts:
         return None
     first = drafts[0]
-    return Step(f"{first.subject}: {first.message}.", "Only a named human approves a document.", f"review {first.subject}, then set status and approved_by")
+    return Step(
+        f"{first.subject}: {first.message}.",
+        "Only a named human approves a document.",
+        f"review {first.subject}, then set status and approved_by",
+    )
 
 
 CHECKS: tuple[Check, ...] = (
@@ -199,7 +232,9 @@ CHECKS: tuple[Check, ...] = (
 )
 
 
-def _load(target: Path, config_dir: Path | None, evidence_dir: Path | None, today: date) -> _Snapshot:
+def _load(
+    target: Path, config_dir: Path | None, evidence_dir: Path | None, today: date
+) -> _Snapshot:
     config_path = config_dir or target / "config"
     evidence_root = evidence_dir or target / "evidence"
     controls: list[Any] = []
@@ -211,7 +246,11 @@ def _load(target: Path, config_dir: Path | None, evidence_dir: Path | None, toda
     except ConfigError as exc:
         config_error = str(exc)
     _, findings = check_documents(target, {control.id for control in controls}, today)
-    findings = findings + check_evidence(evidence_root, controls, today) + check_coverage(target, controls, catalogs)
+    findings = (
+        findings
+        + check_evidence(evidence_root, controls, today)
+        + check_coverage(target, controls, catalogs)
+    )
     return _Snapshot(target, controls, config_error, findings)
 
 
@@ -250,7 +289,10 @@ def run(
 
     step = next_step(target, config_dir=config_dir, evidence_dir=evidence_dir, today=today)
     if step is None:
-        print("No findings. That is not conformance: approvals, internal audit and management review are still yours to do.", file=out)
+        print(
+            "No findings. That is not conformance: approvals, internal audit and management review are still yours to do.",
+            file=out,
+        )
         return 0
     print(f"Next: {step.what}", file=out)
     print(f"  Why: {step.why}", file=out)

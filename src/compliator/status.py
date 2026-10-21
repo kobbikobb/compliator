@@ -102,7 +102,7 @@ def _first_todo(body: str) -> str:
     match = TODO_MARKER.search(body)
     if not match:
         return ""
-    paragraph = body[match.start():].lstrip().split("\n\n", 1)[0]
+    paragraph = body[match.start() :].lstrip().split("\n\n", 1)[0]
     line = " ".join(paragraph.replace("|", " ").split())
     if len(line) <= 90:
         return line
@@ -137,7 +137,9 @@ def _cadence_days(front: dict[str, Any], subject: str) -> tuple[int | None, list
         return None, []
     if not isinstance(cadence, str) or cadence not in CADENCE_DAYS:
         known = ", ".join(sorted(CADENCE_DAYS))
-        return None, [Finding("warning", subject, f"review_cadence {cadence!r} is not one of: {known}")]
+        return None, [
+            Finding("warning", subject, f"review_cadence {cadence!r} is not one of: {known}")
+        ]
     return CADENCE_DAYS[cadence], []
 
 
@@ -145,17 +147,25 @@ def _presence_findings(instance: Path) -> list[Finding]:
     """A document set can be complete file-by-file and still be missing its point."""
     findings: list[Finding] = []
     if not (instance / "isms" / "scope.md").is_file():
-        findings.append(Finding("warning", "isms/scope.md", "no scope statement - nothing says what is covered"))
+        findings.append(
+            Finding("warning", "isms/scope.md", "no scope statement - nothing says what is covered")
+        )
     if not list((instance / "isms" / "policies").glob("POL-*.md")):
         findings.append(Finding("warning", "isms/policies/", "no policies yet - templates only"))
     if not list((instance / "isms" / "risks").glob("RISK-*.md")):
         findings.append(
-            Finding("warning", "isms/risks/", "no risks recorded - for a real organisation an empty register is the finding")
+            Finding(
+                "warning",
+                "isms/risks/",
+                "no risks recorded - for a real organisation an empty register is the finding",
+            )
         )
     return findings
 
 
-def check_documents(instance: Path, control_ids: set[str], today: date) -> tuple[list[Document], list[Finding]]:
+def check_documents(
+    instance: Path, control_ids: set[str], today: date
+) -> tuple[list[Document], list[Finding]]:
     """Review every document under isms/ for finish, honesty and broken links."""
     findings: list[Finding] = _presence_findings(instance)
     documents = _documents(instance)
@@ -172,7 +182,9 @@ def check_documents(instance: Path, control_ids: set[str], today: date) -> tuple
         # Present but empty only: an absent `owner` is already reported by the
         # loop above, and one defect must produce exactly one finding.
         if "owner" in document.front and not document.front.get("owner"):
-            findings.append(Finding("error", subject, "no owner - an unattributed document is not evidence"))
+            findings.append(
+                Finding("error", subject, "no owner - an unattributed document is not evidence")
+            )
         title = document.front.get("title")
         if title is not None and not str(title).strip():
             findings.append(Finding("error", subject, "empty title"))
@@ -181,30 +193,63 @@ def check_documents(instance: Path, control_ids: set[str], today: date) -> tuple
         is_risk = str(subject).startswith("isms/risks/")
         allowed = RISK_STATUSES if is_risk else DOCUMENT_STATUSES
         if status is not None and status not in allowed:
-            findings.append(Finding("warning", subject, f"status {status!r} is not one of: {', '.join(allowed)}"))
+            findings.append(
+                Finding(
+                    "warning", subject, f"status {status!r} is not one of: {', '.join(allowed)}"
+                )
+            )
         if status == "approved" and not document.front.get("approved_by"):
             findings.append(
-                Finding("error", subject, "status is 'approved' with no `approved_by` - a claim with nobody behind it")
+                Finding(
+                    "error",
+                    subject,
+                    "status is 'approved' with no `approved_by` - a claim with nobody behind it",
+                )
             )
         if status != "approved" and document.front.get("approved_by"):
-            findings.append(Finding("warning", subject, "`approved_by` is set but the status is not 'approved'"))
+            findings.append(
+                Finding("warning", subject, "`approved_by` is set but the status is not 'approved'")
+            )
 
         if document.todos:
             if status == "approved":
                 findings.append(
-                    Finding("error", subject, f"approved with {document.todos} TODO left - unfinished work presented as done")
+                    Finding(
+                        "error",
+                        subject,
+                        f"approved with {document.todos} TODO left - unfinished work presented as done",
+                    )
                 )
             else:
-                findings.append(Finding("warning", subject, f"unfinished: {document.todos} to finish (TODO or CONFIRM)", "unfinished", document.todos, document.first_todo))
+                findings.append(
+                    Finding(
+                        "warning",
+                        subject,
+                        f"unfinished: {document.todos} to finish (TODO or CONFIRM)",
+                        "unfinished",
+                        document.todos,
+                        document.first_todo,
+                    )
+                )
         elif status == "draft":
-            findings.append(Finding("note", subject, "draft, no TODOs left - ready for someone to approve", "ready"))
+            findings.append(
+                Finding(
+                    "note", subject, "draft, no TODOs left - ready for someone to approve", "ready"
+                )
+            )
 
         days, cadence_findings = _cadence_days(document.front, subject)
         findings.extend(cadence_findings)
         reviewed = document.front.get("last_reviewed")
         if reviewed in (None, ""):
             if status == "approved":
-                findings.append(Finding("warning", subject, "approved but no `last_reviewed` - nobody recorded a review"))
+                findings.append(
+                    Finding(
+                        "warning",
+                        subject,
+                        "approved but no `last_reviewed` - nobody recorded a review",
+                    )
+                )
         elif days is not None:
             when: date | None = None
             if isinstance(reviewed, datetime):
@@ -222,19 +267,37 @@ def check_documents(instance: Path, control_ids: set[str], today: date) -> tuple
                     try:
                         when = datetime.fromisoformat(str(reviewed)).date()
                     except ValueError:
-                        findings.append(Finding("error", subject, f"`last_reviewed` is not a date: {reviewed!r}"))
+                        findings.append(
+                            Finding(
+                                "error", subject, f"`last_reviewed` is not a date: {reviewed!r}"
+                            )
+                        )
             if when is not None:
                 age = (today - when).days
                 if age < 0:
-                    findings.append(Finding("warning", subject, f"`last_reviewed` is in the future ({when.isoformat()})"))
+                    findings.append(
+                        Finding(
+                            "warning",
+                            subject,
+                            f"`last_reviewed` is in the future ({when.isoformat()})",
+                        )
+                    )
                 elif age > days:
                     findings.append(
-                        Finding("warning", subject, f"review overdue: last reviewed {when.isoformat()}, cadence is {age - days}d past due")
+                        Finding(
+                            "warning",
+                            subject,
+                            f"review overdue: last reviewed {when.isoformat()}, cadence is {age - days}d past due",
+                        )
                     )
 
         for reference in document.front.get("controls") or []:
             if str(reference) not in control_ids:
-                findings.append(Finding("error", subject, f"cites control `{reference}`, which no control defines"))
+                findings.append(
+                    Finding(
+                        "error", subject, f"cites control `{reference}`, which no control defines"
+                    )
+                )
 
     return documents, findings
 
@@ -280,7 +343,9 @@ def check_evidence(
             try:
                 verified = verify_record(record_dir)
             except VerificationError as exc:
-                findings.append(Finding("error", subject, f"latest record fails verification: {exc}"))
+                findings.append(
+                    Finding("error", subject, f"latest record fails verification: {exc}")
+                )
             else:
                 # `result` above comes from LATEST.json, which is outside the
                 # hashed record and can be rewritten by anyone with write access.
@@ -289,30 +354,46 @@ def check_evidence(
                 # exactly the edit this tool exists to catch.
                 if verified.get("result") != result:
                     findings.append(
-                        Finding("error", subject, f"LATEST.json says {result!r} but the record says {verified.get('result')!r}")
+                        Finding(
+                            "error",
+                            subject,
+                            f"LATEST.json says {result!r} but the record says {verified.get('result')!r}",
+                        )
                     )
         else:
-            findings.append(Finding("warning", subject, "LATEST.json points at a record that is not there"))
+            findings.append(
+                Finding("warning", subject, "LATEST.json points at a record that is not there")
+            )
 
         collected = _parse_timestamp(latest.get("collected_at"))
         if collected is None:
-            findings.append(Finding("warning", subject, "LATEST.json has no readable `collected_at`"))
+            findings.append(
+                Finding("warning", subject, "LATEST.json has no readable `collected_at`")
+            )
             continue
         age = (today - collected.date()).days
         if age > control.frequency_days:
             findings.append(
-                Finding("warning", subject, f"evidence is {age}d old, collected every {control.frequency_days}d")
+                Finding(
+                    "warning",
+                    subject,
+                    f"evidence is {age}d old, collected every {control.frequency_days}d",
+                )
             )
     return [replace(finding, kind="evidence") for finding in findings]
 
 
-def check_coverage(instance: Path, controls: list[Any], catalogs: dict[str, Catalog]) -> list[Finding]:
+def check_coverage(
+    instance: Path, controls: list[Any], catalogs: dict[str, Catalog]
+) -> list[Finding]:
     """Requirements of a declared framework that no control maps to.
 
     Only a catalog marked complete can show a gap; a partial one cannot say
     what is missing from the framework.
     """
-    covered = {(key, rid) for control in controls for key, ids in control.mappings.items() for rid in ids}
+    covered = {
+        (key, rid) for control in controls for key, ids in control.mappings.items() for rid in ids
+    }
     findings = []
     for framework in declared_frameworks(instance):
         catalog = catalogs.get(framework.key)
@@ -321,7 +402,12 @@ def check_coverage(instance: Path, controls: list[Any], catalogs: dict[str, Cata
         for rid, summary in catalog.requirements.items():
             if (framework.key, rid) not in covered:
                 findings.append(
-                    Finding("warning", f"{framework.key}:{rid}", f"no control maps to this requirement ({summary})", "coverage")
+                    Finding(
+                        "warning",
+                        f"{framework.key}:{rid}",
+                        f"no control maps to this requirement ({summary})",
+                        "coverage",
+                    )
                 )
     return findings
 
@@ -345,7 +431,7 @@ def _print_report(
         status = document.front.get("status", "?" if document.broken else "-")
         todo = f"{document.todos} TODO" if document.todos else ""
         owner = document.front.get("owner", "")
-        print(f"  {str(status):<9} {document.path:<46} {todo:<9} {owner}", file=out)
+        print(f"  {status!s:<9} {document.path:<46} {todo:<9} {owner}", file=out)
     if note:
         print(file=out)
         print(note, file=out)
@@ -353,12 +439,16 @@ def _print_report(
     print(file=out)
     if findings:
         print("Findings", file=out)
-        for finding in sorted(findings, key=lambda item: (LEVEL_ORDER.get(item.level, 9), item.subject)):
+        for finding in sorted(
+            findings, key=lambda item: (LEVEL_ORDER.get(item.level, 9), item.subject)
+        ):
             print(f"  {finding.level:<8} {finding.subject:<46} {finding.message}", file=out)
     else:
         print("No findings.", file=out)
 
-    counts = {level: sum(1 for finding in findings if finding.level == level) for level in LEVEL_ORDER}
+    counts = {
+        level: sum(1 for finding in findings if finding.level == level) for level in LEVEL_ORDER
+    }
     print(file=out)
     print(
         f"{counts['error']} error(s), {counts['warning']} warning(s), {counts['note']} note(s)",
@@ -409,13 +499,17 @@ def run(
             "config",
             f"no control configuration at {config_path} ({exc}) - the evidence half was not checked",
         )
-        note = f"No control configuration at {config_path} ({exc}). Only the documents were checked."
+        note = (
+            f"No control configuration at {config_path} ({exc}). Only the documents were checked."
+        )
     else:
         controls = list(project.controls)
         catalogs = project.catalogs
 
     findings: list[Finding] = []
-    documents, document_findings = check_documents(target, {control.id for control in controls}, today)
+    documents, document_findings = check_documents(
+        target, {control.id for control in controls}, today
+    )
     findings.extend(document_findings)
     findings.extend(check_evidence(evidence_root, controls, today))
     findings.extend(check_coverage(target, controls, catalogs))

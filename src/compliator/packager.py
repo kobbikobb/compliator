@@ -106,7 +106,7 @@ def write_record(
     passed = all(result.passed for result in check_results)
     result = "pass" if passed else "fail"
 
-    record = {
+    record: dict[str, Any] = {
         "schema": EVIDENCE_SCHEMA,
         "control": {
             "id": control.id,
@@ -140,7 +140,7 @@ def write_record(
     # tied to one checkout layout, sitting inside a hashed artifact, going stale
     # the moment the CLI changes - and nothing verifies it. The stable pins are
     # permanent and enforced: `schema` below, and engine_version in the record.
-    manifest = {
+    manifest: dict[str, Any] = {
         "schema": MANIFEST_SCHEMA,
         "collection_id": cid,
         "control_id": control.id,

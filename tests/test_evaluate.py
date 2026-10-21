@@ -50,11 +50,17 @@ class TestPopulationOps(unittest.TestCase):
 
     def test_exists_all_present(self):
         raw = {"items": [{"v": "x"}, {"v": "y"}]}
-        self.assertTrue(evaluate_check(raw, check("exists", "v", population={"path": "items"}), AS_OF).passed)
+        self.assertTrue(
+            evaluate_check(raw, check("exists", "v", population={"path": "items"}), AS_OF).passed
+        )
 
     def test_date_within_days(self):
         raw = {"items": [{"d": "2026-10-01"}, {"d": "2026-01-01"}]}
-        self.assertTrue(evaluate_check(raw, check("date_within_days", "d", 365, {"path": "items"}), AS_OF).passed)
+        self.assertTrue(
+            evaluate_check(
+                raw, check("date_within_days", "d", 365, {"path": "items"}), AS_OF
+            ).passed
+        )
         result = evaluate_check(raw, check("date_within_days", "d", 30, {"path": "items"}), AS_OF)
         self.assertFalse(result.passed)
 
@@ -72,7 +78,9 @@ class TestPopulationOps(unittest.TestCase):
 
     def test_min_gte(self):
         raw = {"items": [{"n": 2}, {"n": 1}]}
-        self.assertTrue(evaluate_check(raw, check("min_gte", "n", 1, {"path": "items"}), AS_OF).passed)
+        self.assertTrue(
+            evaluate_check(raw, check("min_gte", "n", 1, {"path": "items"}), AS_OF).passed
+        )
         result = evaluate_check(raw, check("min_gte", "n", 2, {"path": "items"}), AS_OF)
         self.assertFalse(result.passed)
 
@@ -84,8 +92,12 @@ class TestPopulationOps(unittest.TestCase):
 
     def test_population_count_gte(self):
         raw = {"items": [{"v": 1}, {"v": 2}]}
-        self.assertTrue(evaluate_check(raw, check("count_gte", "v", 2, {"path": "items"}), AS_OF).passed)
-        self.assertFalse(evaluate_check(raw, check("count_gte", "v", 3, {"path": "items"}), AS_OF).passed)
+        self.assertTrue(
+            evaluate_check(raw, check("count_gte", "v", 2, {"path": "items"}), AS_OF).passed
+        )
+        self.assertFalse(
+            evaluate_check(raw, check("count_gte", "v", 3, {"path": "items"}), AS_OF).passed
+        )
 
     def test_where_filter(self):
         raw = {"items": [{"env": "prod", "v": True}, {"env": "dev", "v": False}]}

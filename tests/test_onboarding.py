@@ -137,7 +137,10 @@ class TestOnboarding(unittest.TestCase):
 
     def test_default_statements_are_marked_for_confirmation_and_follow_the_profile(self):
         answers = write_answers(
-            self.tmp, owner="ciso@example.invalid", policies=[1, 3], profile={"contractors": True, "idp": False}
+            self.tmp,
+            owner="ciso@example.invalid",
+            policies=[1, 3],
+            profile={"contractors": True, "idp": False},
         )
         self._run(answers_path=answers)
 
@@ -214,14 +217,13 @@ class TestOnboarding(unittest.TestCase):
 
     def test_policy_selection_accepts_all_none_and_numbers(self):
         for selection, expected in (("all", 12), ("none", 0), ([3, 5], 2)):
-            with self.subTest(selection=selection):
-                with tempfile.TemporaryDirectory() as fresh:
-                    target = Path(fresh) / "instance"
-                    answers = write_answers(fresh, policies=selection)
-                    with redirect_stdout(io.StringIO()):
-                        run(target, answers_path=answers)
-                    written = list((target / "isms/policies").glob("POL-*.md"))
-                    self.assertEqual(len(written), expected)
+            with self.subTest(selection=selection), tempfile.TemporaryDirectory() as fresh:
+                target = Path(fresh) / "instance"
+                answers = write_answers(fresh, policies=selection)
+                with redirect_stdout(io.StringIO()):
+                    run(target, answers_path=answers)
+                written = list((target / "isms/policies").glob("POL-*.md"))
+                self.assertEqual(len(written), expected)
 
     # -- refusals ------------------------------------------------------------
 
@@ -229,7 +231,9 @@ class TestOnboarding(unittest.TestCase):
         answers = write_answers(self.tmp, policies="minimal", organization="Acme SaaS Co.")
         self._run(answers_path=answers)
         scope = self.target / "isms/scope.md"
-        scope.write_text(scope.read_text(encoding="utf-8") + "\nEDITED BY A HUMAN\n", encoding="utf-8")
+        scope.write_text(
+            scope.read_text(encoding="utf-8") + "\nEDITED BY A HUMAN\n", encoding="utf-8"
+        )
 
         code, out = self._run(answers_path=answers)
 
@@ -272,21 +276,33 @@ class TestOnboarding(unittest.TestCase):
     def test_cli_reports_failures_with_exit_code_2(self):
         err = io.StringIO()
         with redirect_stdout(io.StringIO()), redirect_stderr(err):
-            code = main(["init", "--target", str(self.target), "--answers", str(self.tmp / "missing.yaml")])
+            code = main(
+                ["init", "--target", str(self.target), "--answers", str(self.tmp / "missing.yaml")]
+            )
 
         self.assertEqual(code, 2)
         self.assertIn("answers file not found", err.getvalue())
 
     def test_interactive_run_derives_the_policies_from_a_few_facts(self):
         script = ["y", "Acme SaaS Co.", "invoicing", "founder@example.invalid", "soc2", "y"]
-        script += ["y", "n", "y", "n", "n", "n"]  # idp, contractors, customer data, staff, suppliers, office
-        script += [""]                            # accept the derived set
+        script += [
+            "y",
+            "n",
+            "y",
+            "n",
+            "n",
+            "n",
+        ]  # idp, contractors, customer data, staff, suppliers, office
+        script += [""]  # accept the derived set
 
         code, out = self._run(ask=Ask(script))
 
         self.assertEqual(code, 0)
         self.assertIn("Create isms/scope.md", out)
-        self.assertIn("Not needed for you: Acceptable Use, Supplier Management, HR Security, Physical Security", out)
+        self.assertIn(
+            "Not needed for you: Acceptable Use, Supplier Management, HR Security, Physical Security",
+            out,
+        )
         self.assertTrue((self.target / "isms/policies/POL-003-access-control.md").is_file())
         self.assertFalse((self.target / "isms/policies/POL-005-acceptable-use.md").exists())
         _, body, _ = read_document(self.target / "isms/scope.md")

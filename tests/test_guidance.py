@@ -5,9 +5,9 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from compliator.__main__ import main
-from compliator.guidance import next_step
 from compliator.config import load_project
 from compliator.frameworks import declared_frameworks
+from compliator.guidance import next_step
 from compliator.onboarding import Ask, run, run_framework
 from compliator.status import check_coverage
 
@@ -50,7 +50,9 @@ class TestFramework(unittest.TestCase):
         quietly(run_framework, self.target, "soc2")
         quietly(run_framework, self.target, "both")
 
-        self.assertEqual([f.key for f in declared_frameworks(self.target)], ["iso_27001_2022", "soc2"])
+        self.assertEqual(
+            [f.key for f in declared_frameworks(self.target)], ["iso_27001_2022", "soc2"]
+        )
         text = (self.target / "isms/frameworks.md").read_text(encoding="utf-8")
         self.assertEqual(text.count("SOC 2 Trust Services Criteria |"), 1)
         self.assertIn("ISO/IEC 27001:2022 |", text)
@@ -62,7 +64,9 @@ class TestFramework(unittest.TestCase):
         self.assertEqual([f.key for f in declared_frameworks(self.target)], ["soc2"])
 
         quietly(run_framework, self.target, ask=Ask(["1"]))
-        self.assertEqual([f.key for f in declared_frameworks(self.target)], ["iso_27001_2022", "soc2"])
+        self.assertEqual(
+            [f.key for f in declared_frameworks(self.target)], ["iso_27001_2022", "soc2"]
+        )
 
     def test_rerunning_the_same_choice_changes_nothing(self):
         quietly(run_framework, self.target, "both")
@@ -114,7 +118,9 @@ class TestNext(unittest.TestCase):
         self.assertIn("scope", next_step(self.target).what)
 
         isms = self.target / "isms"
-        (isms / "scope.md").write_text("---\nid: S\ntitle: t\nowner: o\nstatus: draft\n---\n", encoding="utf-8")
+        (isms / "scope.md").write_text(
+            "---\nid: S\ntitle: t\nowner: o\nstatus: draft\n---\n", encoding="utf-8"
+        )
         self.assertIn("POL-001", next_step(self.target).what)
 
         (isms / "policies").mkdir()
@@ -126,7 +132,9 @@ class TestNext(unittest.TestCase):
         from compliator.guidance import _Snapshot, _unfinished
         from compliator.status import Finding
 
-        findings = [Finding("warning", "isms/scope.md", "x", "unfinished", 2, "TODO: what the ISMS covers")]
+        findings = [
+            Finding("warning", "isms/scope.md", "x", "unfinished", 2, "TODO: what the ISMS covers")
+        ]
         step = _unfinished(_Snapshot(self.target, [], None, findings))
 
         self.assertIn("TODO: what the ISMS covers", step.what)
@@ -153,7 +161,8 @@ class TestCoverage(unittest.TestCase):
         (self.target / "config/controls").mkdir(parents=True)
         (self.target / "frameworks").mkdir()
         (self.target / "config/sources.yaml").write_text(
-            "sources:\n  s:\n    plugin: mock_github\n    options: {fixture: f.json}\n", encoding="utf-8"
+            "sources:\n  s:\n    plugin: mock_github\n    options: {fixture: f.json}\n",
+            encoding="utf-8",
         )
         (self.target / "config/controls/c.yaml").write_text(
             "control:\n  id: test-c\n  title: T\n  statement: S\n  owner: o\n  frequency: 1d\n"

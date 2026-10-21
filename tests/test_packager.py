@@ -25,8 +25,12 @@ class TestPackagerAndVerify(unittest.TestCase):
 
     def _collect_one(self):
         code = collect(
-            self.project, control_ids=["soc2-cc8.1"], as_of="2026-10-17",
-            evidence_root=self.tmp, out=io.StringIO(), err=io.StringIO(),
+            self.project,
+            control_ids=["soc2-cc8.1"],
+            as_of="2026-10-17",
+            evidence_root=self.tmp,
+            out=io.StringIO(),
+            err=io.StringIO(),
         )
         self.assertEqual(code, 0)
         # iterdir + is_dir, not glob("*/"): before Python 3.13 pathlib ignores a
@@ -61,7 +65,9 @@ class TestPackagerAndVerify(unittest.TestCase):
         import json
 
         payload = json.loads(raw.read_text())
-        payload["repos"][0]["branch_protection"]["main"]["required_pull_request_reviews"]["enabled"] = False
+        payload["repos"][0]["branch_protection"]["main"]["required_pull_request_reviews"][
+            "enabled"
+        ] = False
         raw.write_text(json.dumps(payload, indent=2) + "\n")
         with self.assertRaises(VerificationError):
             verify_record(record)
@@ -88,23 +94,48 @@ class TestPackagerAndVerify(unittest.TestCase):
 
         dir_a = self.tmp / "a"
         dir_b = self.tmp / "b"
-        rec_a, _ = write_record(dir_a, control, "github_org", "mock_github", provenance, raw, results, "2026-10-17", stamp)
-        rec_b, _ = write_record(dir_b, control, "github_org", "mock_github", provenance, raw, results, "2026-10-17", stamp)
-        self.assertEqual((rec_a / "evidence.json").read_bytes(), (rec_b / "evidence.json").read_bytes())
+        rec_a, _ = write_record(
+            dir_a,
+            control,
+            "github_org",
+            "mock_github",
+            provenance,
+            raw,
+            results,
+            "2026-10-17",
+            stamp,
+        )
+        rec_b, _ = write_record(
+            dir_b,
+            control,
+            "github_org",
+            "mock_github",
+            provenance,
+            raw,
+            results,
+            "2026-10-17",
+            stamp,
+        )
+        self.assertEqual(
+            (rec_a / "evidence.json").read_bytes(), (rec_b / "evidence.json").read_bytes()
+        )
         self.assertEqual(rec_a.name, rec_b.name)
 
     def test_latest_pointer_updates_on_success_only(self):
-        record = self._collect_one()
+        self._collect_one()
         latest = self.tmp / "soc2-cc8.1" / "LATEST.json"
         self.assertTrue(latest.is_file())
         before = latest.read_text()
         collect(
-            self.project, control_ids=["soc2-cc8.1"], as_of="2026-10-17",
-            simulate_failure="github_org", evidence_root=self.tmp,
-            out=io.StringIO(), err=io.StringIO(),
+            self.project,
+            control_ids=["soc2-cc8.1"],
+            as_of="2026-10-17",
+            simulate_failure="github_org",
+            evidence_root=self.tmp,
+            out=io.StringIO(),
+            err=io.StringIO(),
         )
         self.assertEqual(latest.read_text(), before)
-
 
     def test_verify_all_walks_records_and_ignores_the_latest_pointer(self):
         from compliator.verify import verify_all
@@ -136,7 +167,9 @@ class TestPackagerAndVerify(unittest.TestCase):
         self.assertEqual(report["engine_version"], __version__)
         self.assertEqual(report["warnings"], [])
 
-    def _write_synthetic_record(self, *, evidence_schema, manifest_schema, engine_version="0.0.1-ancient"):
+    def _write_synthetic_record(
+        self, *, evidence_schema, manifest_schema, engine_version="0.0.1-ancient"
+    ):
         """A hand-built record with valid hashes, so schema pins are tested alone."""
         from compliator.packager import deterministic_json, sha256_file
 

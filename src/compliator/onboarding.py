@@ -21,19 +21,20 @@ from __future__ import annotations
 
 import re
 import sys
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import date as _date
 from pathlib import Path
 from string import Template
-from typing import Any, Sequence
+from typing import Any
 
 import yaml
 
 from .catalog import (
     ALIASES,
-    FRAMEWORKS_PATH,
-    FRAMEWORKS,
     CLAUSES,
+    FRAMEWORKS,
+    FRAMEWORKS_PATH,
     POLICIES,
     QUESTIONS,
     RISKS_DIR,
@@ -43,7 +44,13 @@ from .catalog import (
     Policy,
 )
 from .errors import OnboardingError
-from .frameworks import NO_FRAMEWORK_ROW, TABLE_HEADER, declare_in_notes, declared_frameworks, framework_row
+from .frameworks import (
+    NO_FRAMEWORK_ROW,
+    TABLE_HEADER,
+    declare_in_notes,
+    declared_frameworks,
+    framework_row,
+)
 
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 
@@ -131,7 +138,9 @@ def _resolve_frameworks(value: Any) -> tuple[Framework, ...]:
     elif isinstance(value, (list, tuple)):
         raw = [str(part) for part in value]
     else:
-        raise OnboardingError(f"frameworks: expected a string or a list, got {type(value).__name__}")
+        raise OnboardingError(
+            f"frameworks: expected a string or a list, got {type(value).__name__}"
+        )
 
     keys: list[str] = []
     for part in raw:
@@ -141,22 +150,30 @@ def _resolve_frameworks(value: Any) -> tuple[Framework, ...]:
                 continue
             if chunk not in ALIASES:
                 known = sorted({key for key in ALIASES if key not in ("all", "both")})
-                raise OnboardingError(f"unknown framework: {part.strip()!r} (known: {', '.join(known)}, both, none)")
+                raise OnboardingError(
+                    f"unknown framework: {part.strip()!r} (known: {', '.join(known)}, both, none)"
+                )
             for key in ALIASES[chunk]:
                 if key not in keys:
                     keys.append(key)
-    return tuple(next(framework for framework in FRAMEWORKS if framework.key == key) for key in keys)
+    return tuple(
+        next(framework for framework in FRAMEWORKS if framework.key == key) for key in keys
+    )
 
 
 FRAMEWORK_MENU = (
     ("1", "iso", "ISO/IEC 27001:2022 - requires a statement of applicability"),
-    ("2", "soc2", "SOC 2 Trust Services Criteria - you choose criteria, no statement of applicability"),
+    (
+        "2",
+        "soc2",
+        "SOC 2 Trust Services Criteria - you choose criteria, no statement of applicability",
+    ),
     ("3", "both", "Both"),
     ("4", "none", "Decide later"),
 )
 
 
-def _ask_framework(ask: "Ask", declared: tuple[Framework, ...] = ()) -> tuple[Framework, ...]:
+def _ask_framework(ask: Ask, declared: tuple[Framework, ...] = ()) -> tuple[Framework, ...]:
     if declared:
         print("Declared: " + ", ".join(item.title for item in declared))
         print("Add another framework? Pick 4 to keep things as they are.")
@@ -211,7 +228,9 @@ def _resolve_profile(value: Any) -> dict[str, bool]:
         raise OnboardingError("profile: expected a mapping of question -> boolean")
     unknown = sorted(set(value) - set(profile))
     if unknown:
-        raise OnboardingError(f"profile: unknown question(s): {', '.join(unknown)} (known: {', '.join(profile)})")
+        raise OnboardingError(
+            f"profile: unknown question(s): {', '.join(unknown)} (known: {', '.join(profile)})"
+        )
     for key, answer in value.items():
         if not isinstance(answer, bool):
             raise OnboardingError(f"profile.{key}: expected true or false")
@@ -220,13 +239,20 @@ def _resolve_profile(value: Any) -> dict[str, bool]:
 
 
 def _statements(policy: Policy, profile: dict[str, bool], owner: str) -> str:
-    clauses = [c for c in CLAUSES if c.policy == policy.number and (c.when is None or profile.get(c.when, False))]
+    clauses = [
+        c
+        for c in CLAUSES
+        if c.policy == policy.number and (c.when is None or profile.get(c.when, False))
+    ]
     if not clauses:
         return (
             "TODO: the rules, as a short numbered list. Each statement is either something a\n"
             "reader could be audited against, or an explicit note that it is judgement-based."
         )
-    lines = [f"{number}. CONFIRM: {clause.text.format(owner=owner)}" for number, clause in enumerate(clauses, 1)]
+    lines = [
+        f"{number}. CONFIRM: {clause.text.format(owner=owner)}"
+        for number, clause in enumerate(clauses, 1)
+    ]
     return "\n".join(lines)
 
 
@@ -294,8 +320,10 @@ def _plan_from_answers(answers: dict[str, Any], create_all: bool) -> _Plan:
         frameworks=_resolve_frameworks(answers.get("frameworks")),
         policies=_resolve_policies(answers.get("policies")),
         profile=_resolve_profile(answers.get("profile")),
-        create={key: (create_all and key not in vetoed) for key in
-                (CREATE_SCOPE, CREATE_FRAMEWORKS, CREATE_SOA, CREATE_POLICIES)},
+        create={
+            key: (create_all and key not in vetoed)
+            for key in (CREATE_SCOPE, CREATE_FRAMEWORKS, CREATE_SOA, CREATE_POLICIES)
+        },
     )
 
 
@@ -332,13 +360,27 @@ def _plan_interactively(ask: Ask, pending: set[str], known: tuple[Framework, ...
         if profile[question.key]:
             wanted.update(question.adds)
     offered = [policy for policy in POLICIES if policy.number in wanted and policy.path in pending]
-    skipped = [policy for policy in POLICIES if policy.number not in wanted and policy.path in pending]
+    skipped = [
+        policy for policy in POLICIES if policy.number not in wanted and policy.path in pending
+    ]
     policies: list[Policy] = []
     if offered:
-        print("\nI will draft " + str(len(offered)) + " policies: " + ", ".join(p.title.removesuffix(" Policy") for p in offered) + ".")
+        print(
+            "\nI will draft "
+            + str(len(offered))
+            + " policies: "
+            + ", ".join(p.title.removesuffix(" Policy") for p in offered)
+            + "."
+        )
         if skipped:
-            print("Not needed for you: " + ", ".join(p.title.removesuffix(" Policy") for p in skipped) + ".")
-        answer = ask.text("OK? Y to draft them, n for none, c to choose one by one", "Y").strip().lower()
+            print(
+                "Not needed for you: "
+                + ", ".join(p.title.removesuffix(" Policy") for p in skipped)
+                + "."
+            )
+        answer = (
+            ask.text("OK? Y to draft them, n for none, c to choose one by one", "Y").strip().lower()
+        )
         if answer.startswith("c"):
             for policy in (p for p in POLICIES if p.path in pending):
                 if ask.yes(f"Create {policy.path}?", default=policy in offered):
@@ -346,10 +388,10 @@ def _plan_interactively(ask: Ask, pending: set[str], known: tuple[Framework, ...
         elif not answer.startswith("n"):
             policies = offered
 
-
     soa_pending = bool(framework_paths & pending)
     create[CREATE_SOA] = soa_pending and ask.yes(
-        f"Create the statement of applicability ({', '.join(sorted(p for p in framework_paths if p))})?", default=True
+        f"Create the statement of applicability ({', '.join(sorted(p for p in framework_paths if p))})?",
+        default=True,
     )
     create[CREATE_POLICIES] = bool(policies)
 
@@ -400,7 +442,9 @@ def _contents(plan: _Plan, today: str) -> dict[str, str]:
         )
 
     if plan.create[CREATE_FRAMEWORKS]:
-        files[FRAMEWORKS_PATH] = _render("frameworks.md", framework_rows=_framework_rows(plan.frameworks))
+        files[FRAMEWORKS_PATH] = _render(
+            "frameworks.md", framework_rows=_framework_rows(plan.frameworks)
+        )
 
     for policy in plan.policies:
         if not plan.create[CREATE_POLICIES]:
@@ -469,7 +513,9 @@ def _print_next_steps(result: Result, remaining: Sequence[str], required_soa: se
     # A statement of applicability no declared framework asks for is not a
     # document waiting to be written - saying "not selected" about it reads as if
     # a TODO were outstanding.
-    inapplicable = [path for path in remaining if path.startswith("isms/soa.") and path not in required_soa]
+    inapplicable = [
+        path for path in remaining if path.startswith("isms/soa.") and path not in required_soa
+    ]
     left_out = [path for path in remaining if path not in inapplicable]
     if left_out:
         shown = ", ".join(left_out[:3])
@@ -511,7 +557,9 @@ def run(
         print("Already set up: every document this scan knows about is present.")
         print("Nothing was written. `compliator verify evidence` checks the other half.")
         return 0
-    print(f"{len(missing)} of {len(rows)} document(s) missing. Existing files are never overwritten.")
+    print(
+        f"{len(missing)} of {len(rows)} document(s) missing. Existing files are never overwritten."
+    )
 
     answers = _load_answers(answers_path) if answers_path else None
     if framework is not None:
@@ -524,7 +572,8 @@ def run(
         plan = _plan_from_answers(answers, create_all=True)
     elif dry_run:
         plan = _plan_from_answers(
-            {"frameworks": [item.key for item in known]} if known is not None else {}, create_all=True
+            {"frameworks": [item.key for item in known]} if known is not None else {},
+            create_all=True,
         )
     else:
         if ask is None and not sys.stdin.isatty():
@@ -591,7 +640,9 @@ def run_framework(
             if declared:
                 print("Declared: " + ", ".join(item.title for item in declared))
                 return 0
-            raise OnboardingError("standard input is not a terminal; pass --set iso_27001_2022|soc2|both|none")
+            raise OnboardingError(
+                "standard input is not a terminal; pass --set iso_27001_2022|soc2|both|none"
+            )
         frameworks = _ask_framework(ask or Ask(), declared)
         if declared and not frameworks:
             return 0
@@ -612,7 +663,9 @@ def run_framework(
         },
     )
     if not frameworks:
-        print("No framework declared, so nothing was written. Run `make framework` when you have decided.")
+        print(
+            "No framework declared, so nothing was written. Run `make framework` when you have decided."
+        )
         return 0
 
     files = _contents(plan, today or _date.today().isoformat())
@@ -632,7 +685,11 @@ def run_framework(
 
 
 def _next_risk_number(risks_dir: Path) -> int:
-    numbers = [int(m.group(1)) for path in risks_dir.glob("RISK-*.md") if (m := re.match(r"RISK-(\d+)", path.name))]
+    numbers = [
+        int(m.group(1))
+        for path in risks_dir.glob("RISK-*.md")
+        if (m := re.match(r"RISK-(\d+)", path.name))
+    ]
     return max(numbers, default=0) + 1
 
 
@@ -650,7 +707,9 @@ def run_new_risk(
         raise OnboardingError(f"target is not a directory: {target}")
     if not title:
         if ask is None and not sys.stdin.isatty():
-            raise OnboardingError("standard input is not a terminal; pass --title \"what could go wrong\"")
+            raise OnboardingError(
+                'standard input is not a terminal; pass --title "what could go wrong"'
+            )
         title = (ask or Ask()).text("What could go wrong, in one line", "").strip()
     if not title:
         raise OnboardingError("a risk needs a one-line scenario")

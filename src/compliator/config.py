@@ -21,15 +21,15 @@ from __future__ import annotations
 
 import hashlib
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import yaml
 
 from .errors import ConfigError
-from .requirements import Catalog, load_catalogs
 from .evaluate import ALL_OPS, OPS_REQUIRING_VALUE, POPULATION_OPS, SCALAR_OPS, Must, Population
+from .requirements import Catalog, load_catalogs
 
 FREQUENCY_RE = re.compile(r"^(\d+)d$")
 CONTROL_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9.]+)+$")
@@ -50,7 +50,7 @@ class Check:
     must: Must
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any], context: str) -> "Check":
+    def from_dict(cls, data: dict[str, Any], context: str) -> Check:
         if not isinstance(data, dict):
             raise ConfigError(f"{context}: check must be a mapping")
         description = data.get("description")
@@ -89,9 +89,7 @@ class Check:
                 )
         else:
             if op in POPULATION_OPS - SCALAR_OPS:
-                raise ConfigError(
-                    f"{context}: op {op!r} requires a 'population'"
-                )
+                raise ConfigError(f"{context}: op {op!r} requires a 'population'")
 
         must = Must(path=path, op=op, value=must_raw.get("value"))
         return cls(description=description, population=population, must=must)
@@ -227,7 +225,9 @@ def load_controls(
                 for key, ids in mappings.items()
             }
         if not isinstance(framework_raw, dict) or not framework_raw:
-            raise ConfigError(f"{path}: needs a non-empty 'mappings' (or legacy 'frameworks') mapping")
+            raise ConfigError(
+                f"{path}: needs a non-empty 'mappings' (or legacy 'frameworks') mapping"
+            )
 
         source = data.get("source")
         if not source or source not in sources:
@@ -240,8 +240,7 @@ def load_controls(
         if not isinstance(checks_raw, list) or not checks_raw:
             raise ConfigError(f"{path}: 'checks' must be a non-empty list")
         checks = [
-            Check.from_dict(entry, f"{path}: check #{i + 1}")
-            for i, entry in enumerate(checks_raw)
+            Check.from_dict(entry, f"{path}: check #{i + 1}") for i, entry in enumerate(checks_raw)
         ]
 
         for required in ("title", "statement", "owner"):
@@ -274,4 +273,6 @@ def load_project(config_dir: str | Path = "config") -> Project:
     sources = load_sources(config_dir)
     catalogs = load_catalogs(root / "frameworks")
     controls = load_controls(config_dir, sources, catalogs)
-    return Project(root=root, config_dir=config_dir, sources=sources, controls=controls, catalogs=catalogs)
+    return Project(
+        root=root, config_dir=config_dir, sources=sources, controls=controls, catalogs=catalogs
+    )

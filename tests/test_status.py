@@ -202,7 +202,9 @@ class TestStatus(unittest.TestCase):
         self.assertIn("soc2-cc9.9", out)
 
     def test_the_word_todo_in_prose_is_not_a_marker(self):
-        body = "\n> Replace every `TODO` as you go. A policy that still says `TODO` is not evidence.\n"
+        body = (
+            "\n> Replace every `TODO` as you go. A policy that still says `TODO` is not evidence.\n"
+        )
         self._clean_instance(body=body)
 
         code, out = self._status()
@@ -220,7 +222,9 @@ class TestStatus(unittest.TestCase):
 
         # `collected_at` is wall-clock, so staleness is measured from a date far
         # enough ahead that no cadence can cover it.
-        code, out = self._status(as_of="2027-06-01", config_dir=ROOT / "config", evidence_dir=evidence_root)
+        code, out = self._status(
+            as_of="2027-06-01", config_dir=ROOT / "config", evidence_dir=evidence_root
+        )
 
         self.assertEqual(code, 1)
         self.assertIn("old, collected every", out)
@@ -251,7 +255,9 @@ class TestStatus(unittest.TestCase):
     def test_missing_evidence_is_a_warning(self):
         self._clean_instance()
 
-        code, out = self._status(config_dir=ROOT / "config", evidence_dir=self.instance / "evidence")
+        code, out = self._status(
+            config_dir=ROOT / "config", evidence_dir=self.instance / "evidence"
+        )
 
         self.assertEqual(code, 1)
         self.assertIn("no evidence collected yet", out)
@@ -312,7 +318,11 @@ class TestStatus(unittest.TestCase):
         )
         self._document(
             "isms/policies/POL-002-risk-management.md",
-            {"id": "POL-002", "title": "Risk Management", **self._common_front(last_reviewed="2026-09-01 10:00:00")},
+            {
+                "id": "POL-002",
+                "title": "Risk Management",
+                **self._common_front(last_reviewed="2026-09-01 10:00:00"),
+            },
         )
 
         code, out = self._status()

@@ -64,7 +64,9 @@ class SourcePlugin(ABC):
     required_keys: ClassVar[tuple[str, ...]] = ()
     description: ClassVar[str] = ""
 
-    def pull(self, options: dict[str, Any], project_root: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+    def pull(
+        self, options: dict[str, Any], project_root: Path
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
         """Return (raw_facts, provenance) or raise PluginError."""
         raw = self.fetch(options, project_root)
         if not isinstance(raw, dict):
@@ -114,7 +116,9 @@ class FileFixtureMixin:
             )
         return path
 
-    def _file_provenance(self, path: Path, project_root: Path, plugin: str, kind: str) -> dict[str, Any]:
+    def _file_provenance(
+        self, path: Path, project_root: Path, plugin: str, kind: str
+    ) -> dict[str, Any]:
         try:
             rel = str(path.relative_to(project_root))
         except ValueError:

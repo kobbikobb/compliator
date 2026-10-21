@@ -30,7 +30,7 @@ class MockCloudPlugin(FileFixtureMixin, SourcePlugin):
             raise PluginError(f"{path}: 'iam_users' must be a list (unexpected shape)")
         if not isinstance(data.get("logging"), dict):
             raise PluginError(f"{path}: 'logging' must be a mapping (unexpected shape)")
-        return data
+        return dict(data)
 
     def provenance(self, options: dict[str, Any], project_root: Path) -> dict[str, Any]:
         path = self._fixture_path(options, project_root, self.name)

@@ -49,7 +49,9 @@ class ControlOutcome:
     last_good_age_days: int | None = None
 
 
-def _read_latest(evidence_root: Path, control: Control) -> tuple[datetime | None, str | None, str | None]:
+def _read_latest(
+    evidence_root: Path, control: Control
+) -> tuple[datetime | None, str | None, str | None]:
     """Return (collected_at, iso_string, result) from LATEST.json, or (None, None, None)."""
     latest_path = evidence_root / control.id / "LATEST.json"
     if not latest_path.is_file():
@@ -126,12 +128,15 @@ def collect(
             print(f"error: unknown control(s): {', '.join(sorted(missing))}", file=err)
             return 2
 
-    print(f"compliator {__version__} - collecting {len(controls)} control(s), as_of {as_of_str}", file=out)
+    print(
+        f"compliator {__version__} - collecting {len(controls)} control(s), as_of {as_of_str}",
+        file=out,
+    )
     print(file=out)
 
     stale_at_start: list[tuple[Control, int]] = []
     for control in controls:
-        ts, iso, _ = _read_latest(evidence_root, control)
+        ts, _iso, _ = _read_latest(evidence_root, control)
         if ts is not None:
             age = (datetime.now(timezone.utc) - ts).days
             if age > control.frequency_days:
@@ -160,9 +165,7 @@ def collect(
                     f"(requested via --simulate-failure)"
                 )
             raw, provenance = plugin.pull(source_def.options, project.root)
-            check_results = [
-                evaluate_check(raw, check, as_of_date) for check in control.checks
-            ]
+            check_results = [evaluate_check(raw, check, as_of_date) for check in control.checks]
         except (PluginError, EmptyPopulationError) as exc:
             outcome.error = str(exc)
             _loud_failure(
@@ -179,8 +182,13 @@ def collect(
         except CompliatorError as exc:
             outcome.error = f"evaluation error: {exc}"
             _loud_failure(
-                err, control, control.source, source_def.plugin,
-                str(exc), outcome.last_good, outcome.last_good_age_days,
+                err,
+                control,
+                control.source,
+                source_def.plugin,
+                str(exc),
+                outcome.last_good,
+                outcome.last_good_age_days,
             )
             outcomes.append(outcome)
             continue
@@ -228,11 +236,7 @@ def collect(
     print(f"{'control':<18}{'result':<8}{'checks':<10}evidence", file=out)
     print("-" * 68, file=out)
     for outcome in outcomes:
-        checks = (
-            f"{outcome.checks_passed}/{outcome.checks_total}"
-            if outcome.checks_total
-            else "-"
-        )
+        checks = f"{outcome.checks_passed}/{outcome.checks_total}" if outcome.checks_total else "-"
         if outcome.record_dir is None:
             evidence = "(none written)"
         else:
@@ -240,7 +244,9 @@ def collect(
                 evidence = str(outcome.record_dir.relative_to(project.root))
             except ValueError:
                 evidence = str(outcome.record_dir)
-        print(f"{outcome.control.id:<18}{outcome.status.upper():<8}{checks:<10}{evidence}", file=out)
+        print(
+            f"{outcome.control.id:<18}{outcome.status.upper():<8}{checks:<10}{evidence}", file=out
+        )
     print("=" * 68, file=out)
 
     errors = sum(1 for o in outcomes if o.status == "error")

@@ -21,17 +21,77 @@ jobs:
       matrix:
         # The low end is the version ENGINE.md claims support for: testing it is
         # what keeps "Python 3.9+" an assertion instead of a hope.
-        python: ["3.9", "3.13", "3.14"]
+        python: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: ${{ matrix.python }}
       - name: Install the one runtime dependency (make install -> .venv)
         run: make install
-      - name: Unit tests
-        run: make test
+      - name: Unit tests (warnings are errors)
+        run: PYTHONWARNINGS=error make test
       - name: Banned vocabulary (scripts/slop-words.txt)
         run: make check-words
       - name: End-to-end smoke (collect, then verify every record)
         run: make demo
+
+  quality:
+    name: lint, types, coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.13"
+      - name: Install runtime and developer tools
+        run: make install-dev
+      - name: Ruff lint and format
+        run: make lint
+      - name: mypy
+        run: make typecheck
+      - name: Coverage floor (pyproject.toml fail_under)
+        run: make coverage
+
+  security:
+    name: security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.13"
+      - name: Install runtime and developer tools
+        run: make install-dev
+      - name: bandit and pip-audit
+        run: make security
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  workflows:
+    name: workflow lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.13"
+      - name: actionlint
+        run: |
+          pip install --quiet actionlint-py
+          actionlint
+      - name: zizmor
+        run: |
+          pip install --quiet zizmor
+          zizmor --offline .github/workflows
