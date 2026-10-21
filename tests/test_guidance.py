@@ -122,6 +122,16 @@ class TestNext(unittest.TestCase):
             (isms / "policies" / name).write_text("---\nid: P\n---\n", encoding="utf-8")
         self.assertIn("risks", next_step(self.target).what)
 
+    def test_unfinished_step_quotes_the_first_open_line(self):
+        from compliator.guidance import _Snapshot, _unfinished
+        from compliator.status import Finding
+
+        findings = [Finding("warning", "isms/scope.md", "x", "unfinished", 2, "TODO: what the ISMS covers")]
+        step = _unfinished(_Snapshot(self.target, [], None, findings))
+
+        self.assertIn("TODO: what the ISMS covers", step.what)
+        self.assertNotIn("more documents", step.what)
+
     def test_cli_exits_zero_with_findings(self):
         code, out = quietly(main, ["next", "--target", str(self.target)])
 

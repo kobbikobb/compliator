@@ -64,6 +64,7 @@ class Finding:
     message: str
     kind: str = ""  # "unfinished", "ready" or "evidence"; empty for the rest
     count: int = 0  # for "unfinished": the TODOs left
+    detail: str = ""  # for "unfinished": the first marked line
 
 
 @dataclass
@@ -71,6 +72,7 @@ class Document:
     path: str
     front: dict[str, Any]
     todos: int = 0
+    first_todo: str = ""
     broken: str | None = None
 
 
@@ -96,6 +98,14 @@ def _count_todos(body: str) -> int:
     return len(TODO_MARKER.findall(body))
 
 
+def _first_todo(body: str) -> str:
+    match = TODO_MARKER.search(body)
+    if not match:
+        return ""
+    line = body[match.start():].lstrip().split("\n", 1)[0].strip(" |")
+    return line if len(line) <= 90 else line[:87] + "..."
+
+
 def _documents(instance: Path) -> list[Document]:
     isms = instance / "isms"
     if not isms.is_dir():
@@ -111,6 +121,7 @@ def _documents(instance: Path) -> list[Document]:
                 path=relative,
                 front=front or {},
                 todos=_count_todos(body),
+                first_todo=_first_todo(body),
                 broken=problem,
             )
         )
@@ -181,7 +192,7 @@ def check_documents(instance: Path, control_ids: set[str], today: date) -> tuple
                     Finding("error", subject, f"approved with {document.todos} TODO left - unfinished work presented as done")
                 )
             else:
-                findings.append(Finding("warning", subject, f"unfinished: {document.todos} to finish (TODO or CONFIRM)", "unfinished", document.todos))
+                findings.append(Finding("warning", subject, f"unfinished: {document.todos} to finish (TODO or CONFIRM)", "unfinished", document.todos, document.first_todo))
         elif status == "draft":
             findings.append(Finding("note", subject, "draft, no TODOs left - ready for someone to approve", "ready"))
 

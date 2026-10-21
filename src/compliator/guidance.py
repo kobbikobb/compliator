@@ -82,7 +82,7 @@ def _foundation_policies(inst: _Snapshot) -> Step | None:
         "Information security and risk management policies not written: "
         + ", ".join(f"POL-{number:03d}" for number in missing) + ".",
         "They set the commitment and the method the risk assessment follows.",
-        "make init",
+        "make init   (it only asks about what is missing)",
     )
 
 
@@ -123,9 +123,9 @@ def _unfinished(inst: _Snapshot) -> Step | None:
     if not todo:
         return None
     first = min(todo, key=lambda f: _document_order(f.subject))
-    more = f" ({len(todo) - 1} more documents also unfinished)" if len(todo) > 1 else ""
+    more = f" Then {len(todo) - 1} other document(s)." if len(todo) > 1 else ""
     return Step(
-        f"{first.subject} has {first.count} item(s) to finish{more}.",
+        f"{first.subject}: {first.count} item(s) to finish, starting with: {first.detail}{more}",
         "A TODO is a question only you can answer; a CONFIRM is a default to check against what you do.",
         f"edit {first.subject}, then make next",
     )
