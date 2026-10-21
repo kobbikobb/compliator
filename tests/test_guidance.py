@@ -7,9 +7,23 @@ from pathlib import Path
 from compliator.__main__ import main
 from compliator.config import load_project
 from compliator.frameworks import declared_frameworks
-from compliator.guidance import next_step
+from compliator.guidance import (
+    _awaiting_approval,
+    _controls,
+    _coverage,
+    _document_errors,
+    _evidence,
+    _foundation_policies,
+    _policies,
+    _remaining,
+    _risks,
+    _Snapshot,
+    _soa,
+    _unfinished,
+    next_step,
+)
 from compliator.onboarding import Ask, run, run_framework
-from compliator.status import check_coverage
+from compliator.status import Finding, check_coverage
 
 
 def quietly(function, *args, **kwargs):
@@ -152,6 +166,93 @@ class TestNext(unittest.TestCase):
 
         self.assertEqual(code, 0)
         self.assertIn("Next:", out)
+
+
+class TestChecks(unittest.TestCase):
+    """Each check fires on its own finding and stays quiet otherwise."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.target = Path(self._tmp.name)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _step(self, check, findings=(), controls=(), config_error=None):
+        return check(_Snapshot(self.target, list(controls), config_error, list(findings)))
+
+    def test_findings_based_checks_are_silent_without_findings(self):
+        for check in (
+            _document_errors,
+            _unfinished,
+            _coverage,
+            _evidence,
+            _remaining,
+            _awaiting_approval,
+        ):
+            self.assertIsNone(self._step(check), check.__name__)
+
+    def test_document_errors_name_the_scope_before_other_documents(self):
+        findings = [
+            Finding("error", "isms/policies/POL-001-a.md", "bad"),
+            Finding("error", "isms/scope.md", "worse"),
+        ]
+
+        step = self._step(_document_errors, findings)
+
+        self.assertIn("isms/scope.md", step.what)
+        self.assertEqual(step.action, "edit isms/scope.md")
+
+    def test_evidence_errors_point_to_verify_and_stale_evidence_to_collect(self):
+        stale = Finding("warning", "c1", "stale", "evidence")
+        failing = Finding("error", "c2", "tampered", "evidence")
+
+        self.assertIn("make verify", self._step(_evidence, [stale, failing]).action)
+        self.assertEqual(self._step(_evidence, [stale]).action, "make collect")
+
+    def test_no_controls_quotes_the_config_error(self):
+        step = self._step(_controls, config_error="missing config file: x")
+
+        self.assertIn("missing config file: x", step.why)
+        self.assertIsNone(self._step(_controls, controls=[object()]))
+
+    def test_coverage_counts_the_other_gaps(self):
+        gaps = [Finding("warning", "soc2:R1", "uncovered", "coverage")] * 3
+
+        self.assertIn("2 more uncovered", self._step(_coverage, gaps).what)
+
+    def test_remaining_warnings_and_drafts_awaiting_approval(self):
+        self.assertIn("make status", self._step(_remaining, [Finding("warning", "x", "m")]).action)
+        ready = Finding("note", "isms/scope.md", "ready to approve", "ready")
+        self.assertIn("approved_by", self._step(_awaiting_approval, [ready]).action)
+
+    def test_partly_written_policies_are_counted(self):
+        policies = self.target / "isms" / "policies"
+        policies.mkdir(parents=True)
+        (policies / "POL-001-a.md").write_text("x", encoding="utf-8")
+        (policies / "POL-002-b.md").write_text("x", encoding="utf-8")
+
+        step = self._step(_policies)
+
+        self.assertIn("recommended policies not written", step.what)
+        self.assertIsNone(self._step(_foundation_policies))
+
+    def test_no_policies_says_so(self):
+        self.assertEqual(self._step(_policies).what, "No policies yet.")
+
+    def test_soa_missing_for_a_declared_framework(self):
+        quietly(run_framework, self.target, "soc2")
+        quietly(run_framework, self.target, "iso_27001_2022")
+        (self.target / "isms/soa.iso_27001_2022.md").unlink()
+
+        self.assertIn("statement of applicability", self._step(_soa).what)
+
+    def test_risks_step_clears_once_a_risk_exists(self):
+        self.assertIn("make new-risk", self._step(_risks).action)
+        (self.target / "isms/risks").mkdir(parents=True)
+        (self.target / "isms/risks/RISK-001-x.md").write_text("x", encoding="utf-8")
+
+        self.assertIsNone(self._step(_risks))
 
 
 class TestCoverage(unittest.TestCase):
