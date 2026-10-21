@@ -79,10 +79,10 @@ def _foundation_policies(inst: _Snapshot) -> Step | None:
     if not missing:
         return None
     return Step(
-        "Information security and risk management policies not written: "
+        "Draft the foundation policies: "
         + ", ".join(f"POL-{number:03d}" for number in missing) + ".",
         "They set the commitment and the method the risk assessment follows.",
-        "make init   (it only asks about what is missing)",
+        "make init   (a few questions about your organisation, then it drafts them)",
     )
 
 
@@ -256,5 +256,5 @@ def run(
     print(f"  Why: {step.why}", file=out)
     print(f"  Do:  {step.action}", file=out)
     print(file=out)
-    print("`make status` shows everything outstanding.", file=out)
+    print("`make status` shows everything outstanding; `make help` lists every command.", file=out)
     return 0
