@@ -156,12 +156,16 @@ FRAMEWORK_MENU = (
 )
 
 
-def _ask_framework(ask: "Ask") -> tuple[Framework, ...]:
-    print("Which framework are you orienting to? It decides which statement of")
-    print("applicability you write; you can add another later with `make framework`.")
+def _ask_framework(ask: "Ask", declared: tuple[Framework, ...] = ()) -> tuple[Framework, ...]:
+    if declared:
+        print("Declared: " + ", ".join(item.title for item in declared))
+        print("Add another framework? Pick 4 to keep things as they are.")
+    else:
+        print("Which framework are you orienting to? It decides which statement of")
+        print("applicability you write; you can add another later with `make framework`.")
     for number, _, label in FRAMEWORK_MENU:
         print(f"  {number}) {label}")
-    answer = ask.text("Choose 1-4", "1").strip()
+    answer = ask.text("Choose 1-4", "4" if declared else "1").strip()
     by_number = {number: alias for number, alias, _ in FRAMEWORK_MENU}
     return _resolve_frameworks(by_number.get(answer, answer))
 
@@ -603,13 +607,14 @@ def run_framework(
     declared = declared_frameworks(target)
 
     if choice is None:
-        if declared:
-            print("Declared: " + ", ".join(item.title for item in declared))
-            print("To add or change, pass FRAMEWORK=iso_27001_2022, soc2 or both.")
-            return 0
         if ask is None and not sys.stdin.isatty():
+            if declared:
+                print("Declared: " + ", ".join(item.title for item in declared))
+                return 0
             raise OnboardingError("standard input is not a terminal; pass --set iso_27001_2022|soc2|both|none")
-        frameworks = _ask_framework(ask or Ask())
+        frameworks = _ask_framework(ask or Ask(), declared)
+        if declared and not frameworks:
+            return 0
     else:
         frameworks = _resolve_frameworks(choice)
 

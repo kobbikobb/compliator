@@ -55,6 +55,15 @@ class TestFramework(unittest.TestCase):
         self.assertEqual(text.count("SOC 2 Trust Services Criteria |"), 1)
         self.assertIn("ISO/IEC 27001:2022 |", text)
 
+    def test_wizard_offers_to_add_when_one_is_declared_and_keeps_by_default(self):
+        quietly(run_framework, self.target, "soc2")
+
+        quietly(run_framework, self.target, ask=Ask([""]))
+        self.assertEqual([f.key for f in declared_frameworks(self.target)], ["soc2"])
+
+        quietly(run_framework, self.target, ask=Ask(["1"]))
+        self.assertEqual([f.key for f in declared_frameworks(self.target)], ["iso_27001_2022", "soc2"])
+
     def test_rerunning_the_same_choice_changes_nothing(self):
         quietly(run_framework, self.target, "both")
         before = (self.target / "isms/frameworks.md").read_text(encoding="utf-8")
