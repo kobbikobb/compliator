@@ -25,7 +25,7 @@ source = ["src"]
 branch = false
 
 [tool.coverage.report]
-fail_under = 85
+fail_under = 88
 show_missing = true
 
 [tool.bandit]
