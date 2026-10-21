@@ -325,26 +325,31 @@ def _plan_interactively(ask: Ask, pending: set[str], known: tuple[Framework, ...
     )
 
     profile = {question.key: question.default for question in QUESTIONS}
-    if any(policy.number in {clause.policy for clause in CLAUSES} and policy.path in pending for policy in POLICIES):
-        print("\nA few facts about your organisation choose which default statements the policies include.")
-        for question in QUESTIONS:
-            profile[question.key] = ask.yes(question.prompt, default=question.default)
+    print("\nA few facts about your organisation choose which policies to draft and what they say.")
+    for question in QUESTIONS:
+        profile[question.key] = ask.yes(question.prompt, default=question.default)
 
-    # Policies 1-2 come before the risks, which come before the SoA, which comes
-    # before the rest of the policies - the dependency order README.md describes.
+    wanted = set(SUGGESTED_START)
+    for question in QUESTIONS:
+        if profile[question.key]:
+            wanted.update(question.adds)
+    offered = [policy for policy in POLICIES if policy.number in wanted and policy.path in pending]
+    skipped = [policy for policy in POLICIES if policy.number not in wanted and policy.path in pending]
     policies: list[Policy] = []
-    for policy in POLICIES:
-        if policy.path not in pending:
-            continue
-        default = policy.number in SUGGESTED_START
-        mark = "suggested" if default else "only if it applies to you"
-        if ask.yes(f"Create {policy.path} ({mark})?", default=default):
-            policies.append(policy)
+    if offered:
+        print("\nI will draft " + str(len(offered)) + " policies: " + ", ".join(p.title.removesuffix(" Policy") for p in offered) + ".")
+        if skipped:
+            print("Not needed for you: " + ", ".join(p.title.removesuffix(" Policy") for p in skipped) + ".")
+        answer = ask.text("OK? Y to draft them, n for none, c to choose one by one", "Y").strip().lower()
+        if answer.startswith("c"):
+            for policy in (p for p in POLICIES if p.path in pending):
+                if ask.yes(f"Create {policy.path}?", default=policy in offered):
+                    policies.append(policy)
+        elif not answer.startswith("n"):
+            policies = offered
 
-    create[CREATE_RISK] = RISK_PATH in pending and ask.yes(f"Create {RISK_PATH} (the first risk)?", default=True)
+    create[CREATE_RISK] = RISK_PATH in pending
     risk_title = TODO
-    if create[CREATE_RISK]:
-        risk_title = ask.text("  What could go wrong, in one line", TODO)
 
     soa_pending = bool(framework_paths & pending)
     create[CREATE_SOA] = soa_pending and ask.yes(
