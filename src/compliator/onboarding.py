@@ -164,7 +164,7 @@ def _ask_framework(ask: "Ask", declared: tuple[Framework, ...] = ()) -> tuple[Fr
         print("Which framework are you orienting to? It decides which statement of")
         print("applicability you write; you can add another later with `make framework`.")
     for number, _, label in FRAMEWORK_MENU:
-        print(f"  {number}) {label}")
+        print(f"  {number}) {'Keep as it is' if declared and number == '4' else label}")
     answer = ask.text("Choose 1-4", "4" if declared else "1").strip()
     by_number = {number: alias for number, alias, _ in FRAMEWORK_MENU}
     return _resolve_frameworks(by_number.get(answer, answer))
