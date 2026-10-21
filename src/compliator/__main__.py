@@ -233,6 +233,13 @@ def main(argv: list[str] | None = None) -> int:
     except CompliatorError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+    except OSError as exc:
+        where = f"{exc.filename}: " if exc.filename else ""
+        print(f"error: {where}{exc.strerror or exc}", file=sys.stderr)
+        return 2
+    except UnicodeDecodeError as exc:
+        print(f"error: file is not valid UTF-8 ({exc.reason})", file=sys.stderr)
+        return 2
     return 2
 
 
