@@ -102,8 +102,11 @@ def _first_todo(body: str) -> str:
     match = TODO_MARKER.search(body)
     if not match:
         return ""
-    line = body[match.start():].lstrip().split("\n", 1)[0].strip(" |")
-    return line if len(line) <= 90 else line[:87] + "..."
+    paragraph = body[match.start():].lstrip().split("\n\n", 1)[0]
+    line = " ".join(paragraph.replace("|", " ").split())
+    if len(line) <= 90:
+        return line
+    return line[:90].rsplit(" ", 1)[0] + " ..."
 
 
 def _documents(instance: Path) -> list[Document]:
