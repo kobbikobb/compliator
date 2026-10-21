@@ -454,6 +454,9 @@ def _print_report(
         f"{counts['error']} error(s), {counts['warning']} warning(s), {counts['note']} note(s)",
         file=out,
     )
+    if findings:
+        print(file=out)
+        print("Next: run `make next` - it names the one thing to do now.", file=out)
 
 
 def run(
