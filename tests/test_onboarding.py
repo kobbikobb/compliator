@@ -177,23 +177,27 @@ class TestOnboarding(unittest.TestCase):
 
     def test_new_risk_asks_for_the_scenario_and_refuses_an_empty_one(self):
         with redirect_stdout(io.StringIO()):
-            run_new_risk(self.target, ask=Ask(["y"] + ["n"] * 7 + ["Laptop lost", ""]))
+            run_new_risk(self.target, ask=Ask(["n"] * 8 + ["y", "Laptop lost", ""]))
             with self.assertRaises(OnboardingError):
                 run_new_risk(self.target, "  ")
 
         risks = sorted(p.name for p in (self.target / "isms/risks").glob("RISK-*.md"))
-        self.assertEqual(len(risks), 2)
+        self.assertEqual(len(risks), 3)
         self.assertTrue(risks[0].startswith("RISK-001-someone-gets-into"))
-        self.assertEqual(risks[1], "RISK-002-laptop-lost.md")
+        self.assertEqual(risks[2], "RISK-003-laptop-lost.md")
 
-    def test_init_asks_the_risk_questions_before_drafting_policies(self):
-        script = ["n"] + ["y"] * 3 + ["n"] * 5 + [""] + ["soc2", "y"] + ["n"] * 6 + ["n"]
+    def test_init_derives_starter_risks_from_the_facts_before_drafting_policies(self):
+        script = ["n", "soc2", "y"] + ["n"] * 5 + ["y", "n", "n"]  # staff only
+        script += ["y", "", "n"]
         _, out = self._run(ask=Ask(script))
 
-        self.assertLess(
-            out.index("Risks come first"), out.index("A few facts about your organisation")
-        )
-        self.assertEqual(len(list((self.target / "isms/risks").glob("RISK-*.md"))), 3)
+        self.assertLess(out.index("A few facts"), out.index("starter risks. A risk"))
+        titles = [
+            read_document(path)[0]["title"]
+            for path in sorted((self.target / "isms/risks").glob("RISK-*.md"))
+        ]
+        self.assertEqual(len(titles), 3)  # two for everyone, phishing for staff
+        self.assertIn("phishing", titles[2])
         self.assertFalse((self.target / "isms/policies").exists())
 
     # -- framework selection drives the SoA ----------------------------------
@@ -297,17 +301,9 @@ class TestOnboarding(unittest.TestCase):
         self.assertIn("answers file not found", err.getvalue())
 
     def test_interactive_run_derives_the_policies_from_a_few_facts(self):
-        script = ["y", "Acme SaaS Co.", "invoicing", "founder@example.invalid"]
-        script += ["n"] * 8 + [""]  # no risks
-        script += ["soc2", "y"]
-        script += [
-            "y",
-            "n",
-            "y",
-            "n",
-            "n",
-            "n",
-        ]  # idp, contractors, customer data, staff, suppliers, office
+        script = ["y", "Acme SaaS Co.", "invoicing", "founder@example.invalid", "soc2", "y"]
+        script += ["y", "n", "y", "y", "y", "n", "n", "n"]  # the facts, in order
+        script += ["n", ""]  # no starter risks, nothing to add
         script += [""]  # accept the derived set
 
         code, out = self._run(ask=Ask(script))
@@ -324,7 +320,7 @@ class TestOnboarding(unittest.TestCase):
         self.assertIn("Acme SaaS Co.", body)
 
     def test_the_answers_can_pull_in_more_policies_or_be_chosen_one_by_one(self):
-        script = ["n"] + ["n"] * 8 + [""] + ["soc2", "y"] + ["y"] * 3 + ["y", "y", "y"] + ["c"]
+        script = ["n", "soc2", "y"] + ["y"] * 8 + ["n", ""] + ["c"]
         script += ["n", "n", "y"] + ["n"] * 13
 
         self._run(ask=Ask(script))

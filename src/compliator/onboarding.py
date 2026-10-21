@@ -39,6 +39,7 @@ from .catalog import (
     QUESTIONS,
     RISKS_DIR,
     SCOPE_PATH,
+    STARTER_RISKS,
     SUGGESTED_START,
     Framework,
     Policy,
@@ -349,9 +350,6 @@ def _plan_interactively(
         what_it_does = ask.text("  What the business does, in one line", TODO)
         owner = ask.text("  Owner (a role or an address)", DEFAULT_OWNER)
 
-    if not list((target / RISKS_DIR).glob("RISK-*.md")):
-        discover_risks(target, ask, owner=owner, today=today)
-
     frameworks = known if known is not None else _ask_framework(ask)
     framework_paths = {framework.soa_path for framework in frameworks if framework.soa_path}
 
@@ -359,10 +357,10 @@ def _plan_interactively(
         f"Create {FRAMEWORKS_PATH} (records the choice)?", default=True
     )
 
-    profile = {question.key: question.default for question in QUESTIONS}
-    print("\nA few facts about your organisation choose which policies to draft and what they say.")
-    for question in QUESTIONS:
-        profile[question.key] = ask.yes(question.prompt, default=question.default)
+    print("\nA few facts about your organisation choose the starter risks and the policies.")
+    profile = _ask_profile(ask)
+    if not list((target / RISKS_DIR).glob("RISK-*.md")):
+        discover_risks(target, ask, profile, owner=owner, today=today)
 
     wanted = set(SUGGESTED_START)
     for question in QUESTIONS:
@@ -702,50 +700,6 @@ def _next_risk_number(risks_dir: Path) -> int:
     return max(numbers, default=0) + 1
 
 
-RISK_PROMPTS: tuple[tuple[str, str, bool], ...] = (
-    (
-        "Could someone get into a staff or admin account with a stolen or guessed password?",
-        "Someone gets into a staff or admin account with a stolen or guessed password",
-        True,
-    ),
-    (
-        "Could a laptop or phone holding company data be lost or stolen?",
-        "A laptop or phone holding company data is lost or stolen",
-        True,
-    ),
-    (
-        "Could customer data reach people who should not see it?",
-        "Customer data is exposed to people who should not see it",
-        True,
-    ),
-    (
-        "Could you lose data with no working backup to restore from?",
-        "Data is lost and there is no working backup to restore from",
-        True,
-    ),
-    (
-        "Could a mistaken change take your service down?",
-        "A mistaken change takes the service down",
-        True,
-    ),
-    (
-        "Could someone who runs something critical leave or be unavailable?",
-        "A person who runs something critical leaves or is unavailable and nobody else can cover",
-        False,
-    ),
-    (
-        "Could staff fall for a phishing email or a payment fraud attempt?",
-        "Staff fall for a phishing email or a payment fraud attempt",
-        False,
-    ),
-    (
-        "Could a supplier or contractor you depend on fail or be breached?",
-        "A supplier or contractor we depend on fails or is breached",
-        False,
-    ),
-)
-
-
 def _write_risk(target: Path, title: str, owner: str, dry_run: bool, today: str | None) -> str:
     risks_dir = target / RISKS_DIR
     risk_id = f"RISK-{_next_risk_number(risks_dir):03d}"
@@ -770,25 +724,33 @@ def _write_risk(target: Path, title: str, owner: str, dry_run: bool, today: str 
     return path
 
 
+def _ask_profile(ask: Ask) -> dict[str, bool]:
+    return {
+        question.key: ask.yes(question.prompt, default=question.default) for question in QUESTIONS
+    }
+
+
 def discover_risks(
     target: Path,
     ask: Ask,
+    profile: dict[str, bool],
     *,
     owner: str = DEFAULT_OWNER,
     dry_run: bool = False,
     today: str | None = None,
 ) -> list[str]:
-    """Plain-language questions that turn into risk skeletons. Ratings stay TODO."""
+    """Draft starter risks from the answers, then take any the user adds. Ratings stay TODO."""
+    starters = [r for r in STARTER_RISKS if r.when is None or profile.get(r.when, False)]
     print()
-    print("Risks come first: they decide which policies you need and what those say.")
-    print("A risk is something that could go wrong. Answer for your organisation; no")
-    print("compliance knowledge needed. You rate and treat each one afterwards.")
-    print()
+    print("From those answers, here are starter risks. A risk is something that could go wrong.")
+    print("Read them, spot what is missing, and edit or add more: they are yours to adjust.")
+    for starter in starters:
+        print(f"  - {starter.title}")
     paths = []
-    for question, title, default in RISK_PROMPTS:
-        if ask.yes(question, default=default):
-            paths.append(_write_risk(target, title, owner, dry_run, today))
-    print("Anything else that worries you? One line each, blank to finish.")
+    if ask.yes("Draft these as risk records?", default=True):
+        for starter in starters:
+            paths.append(_write_risk(target, starter.title, owner, dry_run, today))
+    print("Anything else that could go wrong? One line each, blank to finish.")
     while title := ask.text("  What could go wrong", "").strip():
         paths.append(_write_risk(target, title, owner, dry_run, today))
     return paths
@@ -815,7 +777,16 @@ def run_new_risk(
             raise OnboardingError(
                 'standard input is not a terminal; pass --title "what could go wrong"'
             )
-        paths = discover_risks(target, ask or Ask(), owner=owner, dry_run=dry_run, today=today)
+        ask = ask or Ask()
+        if (target / RISKS_DIR).is_dir() and list((target / RISKS_DIR).glob("RISK-*.md")):
+            line = ask.text("What could go wrong, in one line", "").strip()
+            if not line:
+                raise OnboardingError("a risk needs a one-line scenario")
+            paths = [_write_risk(target, line, owner, dry_run, today)]
+        else:
+            print("A few facts about your organisation choose the starter risks.")
+            profile = _ask_profile(ask)
+            paths = discover_risks(target, ask, profile, owner=owner, dry_run=dry_run, today=today)
     print()
     if not paths:
         print("No risks added. `make new-risk` asks again.")
