@@ -83,6 +83,17 @@ class TestStatus(unittest.TestCase):
 
     # -- a fresh scaffold ----------------------------------------------------
 
+    def test_a_confirm_marker_counts_as_unfinished(self):
+        self._scaffold()
+        self._document(
+            "isms/policies/POL-099-x.md",
+            {"id": "POL-099", "title": "X", **self._common_front()},
+            body="\n1. CONFIRM: Everyone uses MFA.\n",
+        )
+        _, out = self._status()
+
+        self.assertIn("unfinished: 1", out)
+
     def test_freshly_scaffolded_instance_reports_unfinished_work(self):
         self._scaffold(organization="Acme", frameworks="iso_27001_2022", policies="minimal")
 

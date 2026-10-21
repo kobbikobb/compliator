@@ -32,7 +32,9 @@ from .catalog import (
     ALIASES,
     FRAMEWORKS_PATH,
     FRAMEWORKS,
+    CLAUSES,
     POLICIES,
+    QUESTIONS,
     RISK_PATH,
     SCOPE_PATH,
     SUGGESTED_START,
@@ -49,7 +51,7 @@ DEFAULT_ORGANIZATION = "TODO"
 TODO = "TODO"
 
 ANSWERS_KEYS = frozenset(
-    {"organization", "what_it_does", "owner", "frameworks", "policies", "risk_title", "create"}
+    {"organization", "what_it_does", "owner", "frameworks", "policies", "risk_title", "create", "profile"}
 )
 
 # Items the scan knows about, as "labels" so the answers file can veto one.
@@ -196,6 +198,34 @@ def _resolve_policies(value: Any) -> tuple[Policy, ...]:
     return tuple(sorted(selected, key=lambda policy: policy.number))
 
 
+def _resolve_profile(value: Any) -> dict[str, bool]:
+    """Answers to the QUESTIONS; anything not given takes the question's default."""
+    profile = {question.key: question.default for question in QUESTIONS}
+    if value is None:
+        return profile
+    if not isinstance(value, dict):
+        raise OnboardingError("profile: expected a mapping of question -> boolean")
+    unknown = sorted(set(value) - set(profile))
+    if unknown:
+        raise OnboardingError(f"profile: unknown question(s): {', '.join(unknown)} (known: {', '.join(profile)})")
+    for key, answer in value.items():
+        if not isinstance(answer, bool):
+            raise OnboardingError(f"profile.{key}: expected true or false")
+        profile[key] = answer
+    return profile
+
+
+def _statements(policy: Policy, profile: dict[str, bool], owner: str) -> str:
+    clauses = [c for c in CLAUSES if c.policy == policy.number and (c.when is None or profile.get(c.when, False))]
+    if not clauses:
+        return (
+            "TODO: the rules, as a short numbered list. Each statement is either something a\n"
+            "reader could be audited against, or an explicit note that it is judgement-based."
+        )
+    lines = [f"{number}. CONFIRM: {clause.text.format(owner=owner)}" for number, clause in enumerate(clauses, 1)]
+    return "\n".join(lines)
+
+
 def _front_matter(fields: dict[str, Any]) -> str:
     """Deterministic YAML front matter. Omitted keys stay omitted - on purpose."""
     body = yaml.safe_dump(fields, sort_keys=False, allow_unicode=True, default_flow_style=False)
@@ -242,6 +272,7 @@ class _Plan:
     policies: tuple[Policy, ...]
     risk_title: str
     create: dict[str, bool]
+    profile: dict[str, bool] = field(default_factory=lambda: _resolve_profile(None))
 
 
 def _plan_from_answers(answers: dict[str, Any], create_all: bool) -> _Plan:
@@ -260,6 +291,7 @@ def _plan_from_answers(answers: dict[str, Any], create_all: bool) -> _Plan:
         frameworks=_resolve_frameworks(answers.get("frameworks")),
         policies=_resolve_policies(answers.get("policies")),
         risk_title=str(answers.get("risk_title") or TODO),
+        profile=_resolve_profile(answers.get("profile")),
         create={key: (create_all and key not in vetoed) for key in
                 (CREATE_SCOPE, CREATE_FRAMEWORKS, CREATE_RISK, CREATE_SOA, CREATE_POLICIES)},
     )
@@ -287,6 +319,12 @@ def _plan_interactively(ask: Ask, pending: set[str], known: tuple[Framework, ...
     create[CREATE_FRAMEWORKS] = FRAMEWORKS_PATH in pending and ask.yes(
         f"Create {FRAMEWORKS_PATH} (records the choice)?", default=True
     )
+
+    profile = {question.key: question.default for question in QUESTIONS}
+    if any(policy.number in {clause.policy for clause in CLAUSES} and policy.path in pending for policy in POLICIES):
+        print("\nA few facts about your organisation choose which default statements the policies include.")
+        for question in QUESTIONS:
+            profile[question.key] = ask.yes(question.prompt, default=question.default)
 
     # Policies 1-2 come before the risks, which come before the SoA, which comes
     # before the rest of the policies - the dependency order README.md describes.
@@ -318,6 +356,7 @@ def _plan_interactively(ask: Ask, pending: set[str], known: tuple[Framework, ...
         policies=tuple(policies),
         risk_title=risk_title,
         create=create,
+        profile=profile,
     )
 
 
@@ -375,6 +414,7 @@ def _contents(plan: _Plan, today: str) -> dict[str, str]:
                 id=policy.id,
                 title=policy.title,
                 summary=policy.summary,
+                statements=_statements(policy, plan.profile, plan.owner),
                 checkable=policy.checkable,
                 review_cadence="annual",
                 **common,

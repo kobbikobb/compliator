@@ -94,8 +94,16 @@ Three rules it holds to:
 
 The answers file takes `organization`, `what_it_does`, `owner`, `frameworks`
 (`iso_27001_2022`, `soc2`, `both`, `none`), `policies` (`minimal`, `all`, `none`,
-or a list of numbers), `risk_title`, and a `create` map to veto individual items.
+or a list of numbers), `risk_title`, `profile` (true/false answers to the
+questions below), and a `create` map to veto individual items.
 Unknown keys are an error rather than a typo that quietly does nothing.
+
+**Default statements.** POL-001 and POL-003 are written with generic statements,
+each prefixed `CONFIRM:`. `init` asks three questions (identity provider,
+contractors, customer data; `profile:` in the answers file) to choose which apply.
+`status` and `next` count a `CONFIRM:` like a `TODO`, so a policy cannot look
+finished until its owner has checked each statement against what the
+organisation does and removed the marker. Other policies keep their `TODO` skeleton.
 
 Exit codes: `0` wrote what you asked (or there was nothing to do) · `2` refused:
 unreadable answers file, unknown framework, a non-interactive run with no

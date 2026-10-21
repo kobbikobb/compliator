@@ -49,10 +49,10 @@ NOT_A_DOCUMENT = ("README.md",)
 # anyone approves, and the repository's own copy has no front matter either.
 NOT_A_DOCUMENT_PATHS = ("isms/frameworks.md",)
 
-# A TODO *marker*, not the word: the templates talk about their own TODO markers
+# A TODO or CONFIRM *marker*, not the word: the templates talk about their own TODO markers
 # in prose, and counting those would report work that does not exist. Generated
 # markers are either a line beginning with TODO, or the first cell of a table row.
-TODO_MARKER = re.compile(r"^(?:\s*TODO\b|\s*\|\s*TODO\b)", re.MULTILINE)
+TODO_MARKER = re.compile(r"^\s*(?:\|\s*)?(?:\d+\.\s*)?(?:TODO|CONFIRM)\b", re.MULTILINE)
 
 
 @dataclass(frozen=True)
@@ -181,7 +181,7 @@ def check_documents(instance: Path, control_ids: set[str], today: date) -> tuple
                     Finding("error", subject, f"approved with {document.todos} TODO left - unfinished work presented as done")
                 )
             else:
-                findings.append(Finding("warning", subject, f"unfinished: {document.todos} TODO", "unfinished", document.todos))
+                findings.append(Finding("warning", subject, f"unfinished: {document.todos} to finish (TODO or CONFIRM)", "unfinished", document.todos))
         elif status == "draft":
             findings.append(Finding("note", subject, "draft, no TODOs left - ready for someone to approve", "ready"))
 

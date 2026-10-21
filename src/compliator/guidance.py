@@ -125,8 +125,8 @@ def _unfinished(inst: _Snapshot) -> Step | None:
     first = min(todo, key=lambda f: _document_order(f.subject))
     more = f" ({len(todo) - 1} more documents also unfinished)" if len(todo) > 1 else ""
     return Step(
-        f"{first.subject} has {first.count} TODO left{more}.",
-        "Each TODO is a question only your organisation can answer.",
+        f"{first.subject} has {first.count} item(s) to finish{more}.",
+        "A TODO is a question only you can answer; a CONFIRM is a default to check against what you do.",
         f"edit {first.subject}, then make next",
     )
 

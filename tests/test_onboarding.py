@@ -136,6 +136,30 @@ class TestOnboarding(unittest.TestCase):
         self.assertIn("Acme SaaS Co.", body)
         self.assertIn("invoicing for small agencies", body)
 
+    def test_default_statements_are_marked_for_confirmation_and_follow_the_profile(self):
+        answers = write_answers(
+            self.tmp, owner="ciso@example.invalid", policies=[1, 3], profile={"contractors": True, "idp": False}
+        )
+        self._run(answers_path=answers)
+
+        _, body, _ = read_document(self.target / "isms/policies/POL-003-access-control.md")
+        self.assertIn("CONFIRM: Multi-factor authentication is required", body)
+        self.assertIn("CONFIRM: Contractors and third parties", body)
+        self.assertNotIn("single sign-on", body)
+        _, body, _ = read_document(self.target / "isms/policies/POL-001-information-security.md")
+        self.assertIn("1. CONFIRM: ciso@example.invalid is responsible", body)
+
+    def test_a_policy_without_defaults_keeps_its_todo(self):
+        self._run(answers_path=write_answers(self.tmp, policies=[4]))
+
+        _, body, _ = read_document(self.target / "isms/policies/POL-004-change-management.md")
+        self.assertIn("TODO: the rules", body)
+        self.assertNotIn("1. CONFIRM", body)
+
+    def test_unknown_profile_question_is_refused(self):
+        with self.assertRaises(OnboardingError):
+            self._run(answers_path=write_answers(self.tmp, profile={"nope": True}))
+
     def test_risk_ratings_are_left_as_work_to_do(self):
         answers = write_answers(self.tmp, risk_title="Credential leak reaches production data")
         self._run(answers_path=answers)
@@ -245,6 +269,7 @@ class TestOnboarding(unittest.TestCase):
 
     def test_interactive_run_asks_one_document_at_a_time(self):
         script = ["y", "Acme SaaS Co.", "invoicing", "founder@example.invalid", "soc2", "y"]
+        script += ["y", "n", "y"]                     # identity provider, contractors, customer data
         script += ["y", "y"]                          # POL-001, POL-002 are suggested
         script += ["y"] + ["n"] * 9                   # POL-003 only, then decline 004-012
         script += ["y", "Losing the cloud account"]   # the first risk
