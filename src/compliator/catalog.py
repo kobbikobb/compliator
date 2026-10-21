@@ -212,6 +212,8 @@ QUESTIONS: tuple[Question, ...] = (
         "contractors", "Do contractors or other third parties get access to your systems?", False
     ),
     Question("customer_data", "Do you hold customer data in your systems?", True),
+    Question("service", "Do you run a product or service that customers rely on?", True),
+    Question("devices", "Do people use laptops or phones for work?", True),
     Question("staff", "Do you have employees or regular contractors?", True, adds=(5, 11)),
     Question(
         "suppliers",
@@ -221,6 +223,31 @@ QUESTIONS: tuple[Question, ...] = (
     ),
     Question(
         "office", "Do you have an office or other physical site to protect?", False, adds=(12,)
+    ),
+)
+
+
+@dataclass(frozen=True)
+class StarterRisk:
+    """A risk that follows from the answers (``when`` is a profile key, or always)."""
+
+    title: str
+    when: str | None = None
+
+
+STARTER_RISKS: tuple[StarterRisk, ...] = (
+    StarterRisk("Someone gets into a staff or admin account with a stolen or guessed password"),
+    StarterRisk("Data is lost and there is no working backup to restore from"),
+    StarterRisk("A mistaken change takes the service down", "service"),
+    StarterRisk("Customer data is exposed to people who should not see it", "customer_data"),
+    StarterRisk("A laptop or phone holding company data is lost or stolen", "devices"),
+    StarterRisk(
+        "A contractor or third party keeps access after they no longer need it", "contractors"
+    ),
+    StarterRisk("A supplier or SaaS tool we depend on fails or is breached", "suppliers"),
+    StarterRisk("Staff fall for a phishing email or a payment fraud attempt", "staff"),
+    StarterRisk(
+        "Someone enters the office without permission and takes equipment or papers", "office"
     ),
 )
 
