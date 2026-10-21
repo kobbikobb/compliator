@@ -119,3 +119,46 @@ ALIASES: dict[str, tuple[str, ...]] = {
 SCOPE_PATH = "isms/scope.md"
 FRAMEWORKS_PATH = "isms/frameworks.md"
 RISK_PATH = "isms/risks/RISK-001-lost-access.md"
+
+
+@dataclass(frozen=True)
+class Question:
+    key: str
+    prompt: str
+    default: bool
+
+
+# Facts about the organisation that decide which default statements apply.
+QUESTIONS: tuple[Question, ...] = (
+    Question("idp", "Do you use a central identity provider or SSO (Google Workspace, Okta, Entra)?", True),
+    Question("contractors", "Do contractors or other third parties get access to your systems?", False),
+    Question("customer_data", "Do you hold customer data in your systems?", True),
+)
+
+
+@dataclass(frozen=True)
+class Clause:
+    """A generic policy statement, included when ``when`` is true (or always)."""
+
+    policy: int
+    text: str  # "{owner}" is replaced with the owner
+    when: str | None = None
+
+
+# Defaults, not facts: each one is written into the policy marked CONFIRM, and
+# the owner removes the marker only once the statement is true here.
+CLAUSES: tuple[Clause, ...] = (
+    Clause(1, "{owner} is responsible for information security and reports on it to senior management at least once a year."),
+    Clause(1, "Everyone with access to company systems or data follows these policies and reports a suspected incident to {owner} without delay."),
+    Clause(1, "Customer data is treated as confidential and is accessed only to deliver the service or to support that customer.", "customer_data"),
+    Clause(1, "These policies are reviewed at least once a year, and after a significant incident or change."),
+    Clause(1, "An exception to a policy is approved in writing by {owner}, has an end date, and is recorded."),
+    Clause(3, "Each person has their own account; shared accounts are not used unless recorded as an exception."),
+    Clause(3, "Company applications are accessed through the identity provider (single sign-on) wherever the application supports it.", "idp"),
+    Clause(3, "Multi-factor authentication is required on every account that can reach company or customer data."),
+    Clause(3, "Access is granted by role, limited to what the job needs, and approved by the owner of the system or data."),
+    Clause(3, "Access is removed within one working day of someone leaving, and reviewed when someone changes role."),
+    Clause(3, "Contractors and third parties receive access that ends with their engagement.", "contractors"),
+    Clause(3, "Administrative access is limited to named people and used only for administrative tasks."),
+    Clause(3, "User access is reviewed at least once a year, and the review is recorded."),
+)

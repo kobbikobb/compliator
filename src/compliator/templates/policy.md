@@ -1,8 +1,10 @@
 # $title
 
-> **Draft skeleton** from `compliator init`. Each `TODO` is a question only this
-> organisation can answer. Delete this block and the `TODO`s as you fill them
-> in — a policy that still says `TODO` is not evidence of anything.
+> **Draft** from `compliator init`. A `TODO` is a question only this organisation
+> can answer. A `CONFIRM:` statement is a generic default: keep it only if it is
+> true here, change it if not, delete it if it does not apply, then remove the
+> marker. A policy that still has either is not evidence of anything.
+> Delete this block when you are done.
 
 ## Purpose
 
@@ -15,8 +17,7 @@ than restating them.
 
 ## Policy statements
 
-TODO: the rules, as a short numbered list. Each statement is either something a
-reader could be audited against, or an explicit note that it is judgement-based.
+$statements
 
 Mechanically checkable: **$checkable**.
 
