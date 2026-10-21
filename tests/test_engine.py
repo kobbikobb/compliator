@@ -26,7 +26,9 @@ class TestEngineEndToEnd(unittest.TestCase):
 
     def test_collect_all_green(self):
         out, err = io.StringIO(), io.StringIO()
-        code = collect(self.project, as_of="2026-10-17", evidence_root=self.evidence, out=out, err=err)
+        code = collect(
+            self.project, as_of="2026-10-17", evidence_root=self.evidence, out=out, err=err
+        )
         self.assertEqual(code, 0, msg=err.getvalue())
         self.assertIn("All controls collected and passing.", out.getvalue())
 
@@ -38,8 +40,12 @@ class TestEngineEndToEnd(unittest.TestCase):
     def test_collect_single_control(self):
         out, err = io.StringIO(), io.StringIO()
         code = collect(
-            self.project, control_ids=["soc2-cc8.1"], as_of="2026-10-17",
-            evidence_root=self.evidence, out=out, err=err,
+            self.project,
+            control_ids=["soc2-cc8.1"],
+            as_of="2026-10-17",
+            evidence_root=self.evidence,
+            out=out,
+            err=err,
         )
         self.assertEqual(code, 0)
         self.assertTrue((self.evidence / "soc2-cc8.1" / "LATEST.json").is_file())
@@ -47,17 +53,24 @@ class TestEngineEndToEnd(unittest.TestCase):
 
     def test_unknown_control_is_config_error(self):
         code = collect(
-            self.project, control_ids=["nope"], evidence_root=self.evidence,
-            out=io.StringIO(), err=io.StringIO(),
+            self.project,
+            control_ids=["nope"],
+            evidence_root=self.evidence,
+            out=io.StringIO(),
+            err=io.StringIO(),
         )
         self.assertEqual(code, 2)
 
     def test_simulated_failure_is_loud_and_writes_no_record(self):
         out, err = io.StringIO(), io.StringIO()
         code = collect(
-            self.project, control_ids=["soc2-cc8.1"], as_of="2026-10-17",
-            simulate_failure="github_org", evidence_root=self.evidence,
-            out=out, err=err,
+            self.project,
+            control_ids=["soc2-cc8.1"],
+            as_of="2026-10-17",
+            simulate_failure="github_org",
+            evidence_root=self.evidence,
+            out=out,
+            err=err,
         )
         self.assertEqual(code, 2)
         self.assertIn("COLLECTION FAILED", err.getvalue())
@@ -66,23 +79,35 @@ class TestEngineEndToEnd(unittest.TestCase):
 
     def test_failure_reports_last_good_age(self):
         collect(
-            self.project, control_ids=["soc2-cc8.1"], as_of="2026-10-17",
-            evidence_root=self.evidence, out=io.StringIO(), err=io.StringIO(),
+            self.project,
+            control_ids=["soc2-cc8.1"],
+            as_of="2026-10-17",
+            evidence_root=self.evidence,
+            out=io.StringIO(),
+            err=io.StringIO(),
         )
         err = io.StringIO()
         collect(
-            self.project, control_ids=["soc2-cc8.1"], as_of="2026-10-17",
-            simulate_failure="github_org", evidence_root=self.evidence,
-            out=io.StringIO(), err=err,
+            self.project,
+            control_ids=["soc2-cc8.1"],
+            as_of="2026-10-17",
+            simulate_failure="github_org",
+            evidence_root=self.evidence,
+            out=io.StringIO(),
+            err=err,
         )
         self.assertIn("last good evidence:", err.getvalue())
 
     def test_no_last_good_is_reported_as_none(self):
         err = io.StringIO()
         collect(
-            self.project, control_ids=["soc2-cc8.1"], as_of="2026-10-17",
-            simulate_failure="github_org", evidence_root=self.evidence,
-            out=io.StringIO(), err=err,
+            self.project,
+            control_ids=["soc2-cc8.1"],
+            as_of="2026-10-17",
+            simulate_failure="github_org",
+            evidence_root=self.evidence,
+            out=io.StringIO(),
+            err=err,
         )
         self.assertIn("last good evidence: NONE", err.getvalue())
 

@@ -37,50 +37,88 @@ def _build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_collect = sub.add_parser("collect", help="run evidence collection")
-    p_collect.add_argument("--config-dir", default="config", help="config directory (default: config)")
-    p_collect.add_argument("--evidence-dir", default=None, help="evidence output root (default: <project>/evidence)")
     p_collect.add_argument(
-        "--control", action="append", default=None, metavar="ID",
+        "--config-dir", default="config", help="config directory (default: config)"
+    )
+    p_collect.add_argument(
+        "--evidence-dir", default=None, help="evidence output root (default: <project>/evidence)"
+    )
+    p_collect.add_argument(
+        "--control",
+        action="append",
+        default=None,
+        metavar="ID",
         help="collect only this control id (repeatable)",
     )
-    p_collect.add_argument("--as-of", default=None, metavar="YYYY-MM-DD", help="date to evaluate age-based checks against")
     p_collect.add_argument(
-        "--simulate-failure", default=None, metavar="SOURCE_OR_PLUGIN",
+        "--as-of",
+        default=None,
+        metavar="YYYY-MM-DD",
+        help="date to evaluate age-based checks against",
+    )
+    p_collect.add_argument(
+        "--simulate-failure",
+        default=None,
+        metavar="SOURCE_OR_PLUGIN",
         help="force a collector failure for a source (demo of the fail-loud path)",
     )
 
     p_verify = sub.add_parser("verify", help="verify evidence record hashes")
-    p_verify.add_argument("path", nargs="?", default="evidence", help="record dir or evidence root (default: evidence)")
+    p_verify.add_argument(
+        "path",
+        nargs="?",
+        default="evidence",
+        help="record dir or evidence root (default: evidence)",
+    )
 
     p_list = sub.add_parser("list", help="list configured controls")
     p_list.add_argument("--config-dir", default="config")
 
     p_init = sub.add_parser("init", help="scaffold the ISMS documents for an instance")
-    p_init.add_argument("--target", default=".", help="instance root to scan and write into (default: .)")
     p_init.add_argument(
-        "--answers", default=None, metavar="FILE",
+        "--target", default=".", help="instance root to scan and write into (default: .)"
+    )
+    p_init.add_argument(
+        "--answers",
+        default=None,
+        metavar="FILE",
         help="YAML file answering every question; runs entirely non-interactively",
     )
     p_init.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="print what would be written, ask nothing, write nothing",
     )
 
     p_init.add_argument(
-        "--framework", default=None, metavar="NAME",
+        "--framework",
+        default=None,
+        metavar="NAME",
         help="iso_27001_2022, soc2, both or none; skips the framework question",
     )
 
     p_framework = sub.add_parser("framework", help="declare framework(s)")
     p_framework.add_argument("--target", default=".", help="instance root (default: .)")
-    p_framework.add_argument("--set", dest="choice", default=None, metavar="NAME", help="iso_27001_2022, soc2, both or none")
-    p_framework.add_argument("--dry-run", action="store_true", help="print what would be written, write nothing")
+    p_framework.add_argument(
+        "--set",
+        dest="choice",
+        default=None,
+        metavar="NAME",
+        help="iso_27001_2022, soc2, both or none",
+    )
+    p_framework.add_argument(
+        "--dry-run", action="store_true", help="print what would be written, write nothing"
+    )
 
     p_risk = sub.add_parser("new-risk", help="add the next risk skeleton (RISK-NNN)")
     p_risk.add_argument("--target", default=".", help="instance root (default: .)")
-    p_risk.add_argument("--title", default=None, help="the scenario in one line; asked for if omitted")
+    p_risk.add_argument(
+        "--title", default=None, help="the scenario in one line; asked for if omitted"
+    )
     p_risk.add_argument("--owner", default=None, help="a role or an address")
-    p_risk.add_argument("--dry-run", action="store_true", help="print what would be written, write nothing")
+    p_risk.add_argument(
+        "--dry-run", action="store_true", help="print what would be written, write nothing"
+    )
 
     p_next = sub.add_parser("next", help="name the next step")
     p_next.add_argument("--target", default=".", help="instance root to inspect (default: .)")
@@ -90,9 +128,18 @@ def _build_parser() -> argparse.ArgumentParser:
 
     p_status = sub.add_parser("status", help="report on the documents and the evidence (read-only)")
     p_status.add_argument("--target", default=".", help="instance root to inspect (default: .)")
-    p_status.add_argument("--config-dir", default=None, help="control config directory (default: <target>/config)")
-    p_status.add_argument("--evidence-dir", default=None, help="evidence root (default: <target>/evidence)")
-    p_status.add_argument("--as-of", default=None, metavar="YYYY-MM-DD", help="date to age reviews and evidence against")
+    p_status.add_argument(
+        "--config-dir", default=None, help="control config directory (default: <target>/config)"
+    )
+    p_status.add_argument(
+        "--evidence-dir", default=None, help="evidence root (default: <target>/evidence)"
+    )
+    p_status.add_argument(
+        "--as-of",
+        default=None,
+        metavar="YYYY-MM-DD",
+        help="date to age reviews and evidence against",
+    )
 
     return parser
 
@@ -110,7 +157,8 @@ def _cmd_collect(args: argparse.Namespace) -> int:
 
 
 def _print_warnings(report: dict[str, object]) -> None:
-    for warning in report.get("warnings", []):  # type: ignore[union-attr]
+    warnings = report.get("warnings", [])
+    for warning in warnings if isinstance(warnings, list) else []:
         print(f"    warning: {warning}")
 
 

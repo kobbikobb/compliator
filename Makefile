@@ -1,4 +1,4 @@
-.PHONY: help next install framework init status check collect verify list demo test check-words clean-evidence
+.PHONY: help next install install-dev framework init new-risk status check collect verify list demo test check-words clean-evidence lint format typecheck coverage security ci
 
 # Prefer .venv/ (created by `make install`) over the system interpreter:
 # PEP 668 forbids pip installs into the system Python on macOS/Homebrew.
@@ -60,6 +60,30 @@ demo: collect verify ## Collect from the synthetic fixtures, then verify every r
 
 test: ## Run the unit test suite
 	@PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m unittest discover -s tests
+
+install-dev: install ## Add the developer tools (ruff, mypy, coverage, bandit, pip-audit)
+	@$(VENV_PY) -m pip install --quiet -r requirements-dev.txt
+
+lint: ## Ruff lint and format check (what CI runs)
+	@$(PYTHON) -m ruff check src tests scripts
+	@$(PYTHON) -m ruff format --check src tests scripts
+
+format: ## Apply ruff's fixes and formatting
+	@$(PYTHON) -m ruff check --fix src tests scripts
+	@$(PYTHON) -m ruff format src tests scripts
+
+typecheck: ## Static type check of src/ with mypy
+	@$(PYTHON) -m mypy
+
+coverage: ## Run the tests with warnings as errors and enforce the coverage floor
+	@PYTHONPATH=$(PYTHONPATH) $(PYTHON) -W error -m coverage run -m unittest discover -s tests
+	@$(PYTHON) -m coverage report
+
+security: ## Static security scan (bandit) and known-vulnerable dependencies (pip-audit)
+	@$(PYTHON) -m bandit -q -c pyproject.toml -r src
+	@$(PYTHON) -m pip_audit -r requirements.txt
+
+ci: lint typecheck coverage security check-words ## Everything CI gates on, locally
 
 check-words: ## Fail if a tracked file contains banned vocabulary (scripts/slop-words.txt)
 	@python3 scripts/check_words.py

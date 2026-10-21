@@ -27,11 +27,13 @@ class MockGitHubPlugin(FileFixtureMixin, SourcePlugin):
             data = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
             raise PluginError(f"source unreachable: cannot read {path}: {exc}") from exc
-        if not isinstance(data.get("repos"), list) or not isinstance(data.get("workflow_runs"), list):
+        if not isinstance(data.get("repos"), list) or not isinstance(
+            data.get("workflow_runs"), list
+        ):
             raise PluginError(
                 f"{path}: 'repos' and 'workflow_runs' must be lists (unexpected shape)"
             )
-        return data
+        return dict(data)
 
     def provenance(self, options: dict[str, Any], project_root: Path) -> dict[str, Any]:
         path = self._fixture_path(options, project_root, self.name)

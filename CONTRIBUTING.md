@@ -26,6 +26,9 @@ than large ones, and there is no roadmap obligation implied by opening an issue.
 
 ```bash
 make install   # creates .venv, installs PyYAML into it
+make install-dev  # adds ruff, mypy, coverage, bandit, pip-audit
+make ci        # lint, types, coverage floor, security scan: what CI gates on
+make format    # apply ruff fixes and formatting
 make test      # unit test suite
 make demo      # collect from the synthetic fixtures, then verify every record
 ```
@@ -37,7 +40,7 @@ The engine is imported from `src/`, not installed, so the Makefile carries
 `PYTHONPATH=src` for you.
 
 Every push to `main` and every pull request runs those commands in GitHub Actions
-across Python 3.9, 3.13 and 3.14 (`.github/workflows/ci.yml`) — unit tests, then
+across Python 3.9 to 3.14 (plus lint, types, coverage, security, CodeQL and workflow lint jobs) (`.github/workflows/ci.yml`) — unit tests, then
 the end-to-end collect-and-verify. Nothing is merged on local green alone.
 
 ## Reviews

@@ -40,7 +40,9 @@ def load_catalogs(directory: Path) -> dict[str, Catalog]:
         if not key or not data.get("title") or not data.get("version"):
             raise ConfigError(f"{path}: needs 'framework', 'title' and 'version'")
         if not isinstance(requirements, dict) or not requirements:
-            raise ConfigError(f"{path}: 'requirements' must be a non-empty mapping of id -> summary")
+            raise ConfigError(
+                f"{path}: 'requirements' must be a non-empty mapping of id -> summary"
+            )
         if key in catalogs:
             raise ConfigError(f"{path}: duplicate framework {key!r}")
         catalogs[str(key)] = Catalog(
