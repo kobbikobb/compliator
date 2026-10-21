@@ -191,7 +191,7 @@ class TestOnboarding(unittest.TestCase):
         script += ["y", "", "n"]
         _, out = self._run(ask=Ask(script))
 
-        self.assertLess(out.index("A few facts"), out.index("starter risks. A risk"))
+        self.assertLess(out.index("risks first, then policies"), out.index("starter risks. A risk"))
         titles = [
             read_document(path)[0]["title"]
             for path in sorted((self.target / "isms/risks").glob("RISK-*.md"))

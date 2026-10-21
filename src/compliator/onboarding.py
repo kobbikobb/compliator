@@ -357,9 +357,15 @@ def _plan_interactively(
         f"Create {FRAMEWORKS_PATH} (records the choice)?", default=True
     )
 
-    print("\nA few facts about your organisation choose the starter risks and the policies.")
+    has_risks = bool(list((target / RISKS_DIR).glob("RISK-*.md")))
+    print("\nStep: risks first, then policies. Your answers to these questions choose both.")
+    print(
+        "Risks already recorded; answers only choose policies."
+        if has_risks
+        else "No risks recorded yet; after the questions I will propose starter risks."
+    )
     profile = _ask_profile(ask)
-    if not list((target / RISKS_DIR).glob("RISK-*.md")):
+    if not has_risks:
         discover_risks(target, ask, profile, owner=owner, today=today)
 
     wanted = set(SUGGESTED_START)
