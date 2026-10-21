@@ -11,7 +11,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Callable, Optional, TextIO
 
-from .catalog import POLICIES, RISK_PATH, SCOPE_PATH, SUGGESTED_START
+from .catalog import POLICIES, SCOPE_PATH, SUGGESTED_START
 from .config import load_project
 from .errors import CompliatorError, ConfigError
 from .frameworks import declared_frameworks
@@ -57,8 +57,8 @@ def _risks(inst: _Snapshot) -> Step | None:
         return None
     return Step(
         "No risks recorded.",
-        "Risks decide which requirements apply and which policies you need.",
-        "make init   (then describe what could go wrong)",
+        "Risks decide which requirements apply and which policies you need. List the 3-5 that would hurt most.",
+        "make new-risk   (one line on what could go wrong; repeat for each risk)",
     )
 
 

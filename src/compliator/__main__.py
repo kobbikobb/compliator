@@ -10,6 +10,7 @@ Commands:
     init      scaffold an instance's ISMS documents, one item at a time
     status    report whether the documents and the evidence are still true
     framework declare framework(s)
+    new-risk  add the next risk skeleton
     next      name the next step
 """
 
@@ -25,7 +26,7 @@ from .engine import collect
 from .errors import CompliatorError
 from .guidance import run as run_next
 from .onboarding import run as run_init
-from .onboarding import run_framework
+from .onboarding import run_framework, run_new_risk
 from .status import run as run_status
 from .verify import verify_all, verify_record
 
@@ -74,6 +75,12 @@ def _build_parser() -> argparse.ArgumentParser:
     p_framework.add_argument("--target", default=".", help="instance root (default: .)")
     p_framework.add_argument("--set", dest="choice", default=None, metavar="NAME", help="iso_27001_2022, soc2, both or none")
     p_framework.add_argument("--dry-run", action="store_true", help="print what would be written, write nothing")
+
+    p_risk = sub.add_parser("new-risk", help="add the next risk skeleton (RISK-NNN)")
+    p_risk.add_argument("--target", default=".", help="instance root (default: .)")
+    p_risk.add_argument("--title", default=None, help="the scenario in one line; asked for if omitted")
+    p_risk.add_argument("--owner", default=None, help="a role or an address")
+    p_risk.add_argument("--dry-run", action="store_true", help="print what would be written, write nothing")
 
     p_next = sub.add_parser("next", help="name the next step")
     p_next.add_argument("--target", default=".", help="instance root to inspect (default: .)")
@@ -158,6 +165,9 @@ def main(argv: list[str] | None = None) -> int:
             )
         if args.command == "framework":
             return run_framework(Path(args.target), args.choice, dry_run=args.dry_run)
+        if args.command == "new-risk":
+            owner = {"owner": args.owner} if args.owner else {}
+            return run_new_risk(Path(args.target), args.title, dry_run=args.dry_run, **owner)
         if args.command == "next":
             return run_next(
                 Path(args.target),

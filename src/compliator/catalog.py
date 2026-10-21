@@ -118,7 +118,7 @@ ALIASES: dict[str, tuple[str, ...]] = {
 # instance root; the SoA is added only when a declared framework requires one.
 SCOPE_PATH = "isms/scope.md"
 FRAMEWORKS_PATH = "isms/frameworks.md"
-RISK_PATH = "isms/risks/RISK-001-lost-access.md"
+RISKS_DIR = "isms/risks"
 
 
 @dataclass(frozen=True)

@@ -94,7 +94,7 @@ Three rules it holds to:
 
 The answers file takes `organization`, `what_it_does`, `owner`, `frameworks`
 (`iso_27001_2022`, `soc2`, `both`, `none`), `policies` (`minimal`, `all`, `none`,
-or a list of numbers), `risk_title`, `profile` (true/false answers to the
+or a list of numbers), `profile` (true/false answers to the
 questions below), and a `create` map to veto individual items.
 Unknown keys are an error rather than a typo that quietly does nothing.
 

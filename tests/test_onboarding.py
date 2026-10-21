@@ -9,7 +9,7 @@ import yaml
 from compliator.__main__ import main
 from compliator.catalog import POLICIES, SUGGESTED_START
 from compliator.errors import OnboardingError
-from compliator.onboarding import Ask, run
+from compliator.onboarding import Ask, run, run_new_risk
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -69,7 +69,7 @@ class TestOnboarding(unittest.TestCase):
     def test_declining_everything_is_not_an_error(self):
         answers = write_answers(
             self.tmp,
-            create={"scope": False, "frameworks": False, "risk": False, "soa": False, "policies": False},
+            create={"scope": False, "frameworks": False, "soa": False, "policies": False},
         )
 
         code, out = self._run(answers_path=answers)
@@ -87,7 +87,6 @@ class TestOnboarding(unittest.TestCase):
             what_it_does="invoicing for small agencies",
             owner="founder@example.invalid",
             frameworks="iso_27001_2022",
-            risk_title="Loss of access to the cloud account",
         )
 
         code, _ = self._run(answers_path=answers)
@@ -97,7 +96,7 @@ class TestOnboarding(unittest.TestCase):
         self.assertTrue(scope.is_file())
         self.assertTrue((self.target / "isms/frameworks.md").is_file())
         self.assertTrue((self.target / "isms/soa.iso_27001_2022.md").is_file())
-        self.assertTrue((self.target / "isms/risks/RISK-001-lost-access.md").is_file())
+        self.assertFalse((self.target / "isms/risks").exists())
         for number in SUGGESTED_START:
             self.assertTrue((self.target / f"isms/policies/{self._policy_name(number)}").is_file())
         for number in (5, 9, 11, 12):
@@ -111,7 +110,7 @@ class TestOnboarding(unittest.TestCase):
         self._run(answers_path=answers)
 
         documents = sorted((self.target / "isms").rglob("*.md"))
-        self.assertEqual(len(documents), 12 + 4)  # 12 policies, scope, risk, SoA, frameworks.md
+        self.assertEqual(len(documents), 12 + 3)  # 12 policies, scope, SoA, frameworks.md
         for document in documents:
             if document.name == "frameworks.md":
                 continue  # a note, not a controlled document - it has no front matter
@@ -160,15 +159,26 @@ class TestOnboarding(unittest.TestCase):
         with self.assertRaises(OnboardingError):
             self._run(answers_path=write_answers(self.tmp, profile={"nope": True}))
 
-    def test_risk_ratings_are_left_as_work_to_do(self):
-        answers = write_answers(self.tmp, risk_title="Credential leak reaches production data")
-        self._run(answers_path=answers)
+    def test_new_risk_numbers_on_and_leaves_ratings_as_work_to_do(self):
+        with redirect_stdout(io.StringIO()):
+            run_new_risk(self.target, "Credential leak reaches production data", today="2026-01-01")
+            run_new_risk(self.target, "Supplier outage", today="2026-01-01")
 
-        front, _, _ = read_document(self.target / "isms/risks/RISK-001-lost-access.md")
+        first = self.target / "isms/risks/RISK-001-credential-leak-reaches-production-data.md"
+        front, _, _ = read_document(first)
         self.assertEqual(front["title"], "Credential leak reaches production data")
         self.assertEqual(front["status"], "open")
         for field in ("likelihood", "impact", "inherent", "residual", "treatment"):
             self.assertEqual(front[field], "TODO", f"{field} must not be pre-rated")
+        self.assertTrue((self.target / "isms/risks/RISK-002-supplier-outage.md").is_file())
+
+    def test_new_risk_asks_for_the_scenario_and_refuses_an_empty_one(self):
+        with redirect_stdout(io.StringIO()):
+            run_new_risk(self.target, ask=Ask(["Laptop lost"]))
+            with self.assertRaises(OnboardingError):
+                run_new_risk(self.target, ask=Ask([""]))
+
+        self.assertTrue((self.target / "isms/risks/RISK-001-laptop-lost.md").is_file())
 
     # -- framework selection drives the SoA ----------------------------------
 
@@ -279,7 +289,6 @@ class TestOnboarding(unittest.TestCase):
         self.assertIn("Not needed for you: Acceptable Use, Supplier Management, HR Security, Physical Security", out)
         self.assertTrue((self.target / "isms/policies/POL-003-access-control.md").is_file())
         self.assertFalse((self.target / "isms/policies/POL-005-acceptable-use.md").exists())
-        self.assertTrue((self.target / "isms/risks/RISK-001-lost-access.md").is_file())
         _, body, _ = read_document(self.target / "isms/scope.md")
         self.assertIn("Acme SaaS Co.", body)
 
