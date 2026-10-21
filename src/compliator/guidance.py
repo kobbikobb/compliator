@@ -62,7 +62,7 @@ def _risks(inst: _Snapshot) -> Step | None:
     return Step(
         "No risks recorded.",
         "Risks decide which requirements apply and which policies you need.",
-        "make new-risk   (a few plain-language questions; no compliance knowledge needed)",
+        "make new-risk   (a few questions about your organisation, then it drafts starter risks)",
     )
 
 

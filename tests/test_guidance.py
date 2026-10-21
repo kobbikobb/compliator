@@ -103,7 +103,7 @@ class TestFramework(unittest.TestCase):
     def test_declared_framework_is_not_asked_again_by_init(self):
         quietly(run_framework, self.target, "soc2")
         _, out = quietly(
-            run, self.target, ask=Ask(["n"] * 9 + [""] + ["n"] * 20)
+            run, self.target, ask=Ask(["n"] * 10 + [""] + ["n"] * 20)
         )  # no risks, no documents
 
         self.assertNotIn("Which framework", out)
