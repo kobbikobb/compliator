@@ -1,6 +1,6 @@
 # $title
 
-> **Draft skeleton** from `compliator init`. Keep it to a page, and replace every
+> **Draft skeleton** from `compliator new-risk`. Keep it to a page, and replace every
 > `TODO`: a risk entry with placeholders is worse than no entry, because it looks
 > like work was done.
 

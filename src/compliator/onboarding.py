@@ -4,8 +4,8 @@
 
 1. **Scan.** It looks for the documents an ISMS needs and reports which are
    missing. That report is also the answer to "are we set up yet?".
-2. **Ask, once per document.** For each missing item it asks a single question
-   and, if the answer is yes, writes a skeleton.
+2. **Ask a few facts.** A handful of yes/no questions about the organisation
+   choose which policies are drafted; one confirmation writes them.
 
 What it writes is a *skeleton*: the right location, correct front matter, the
 headings a policy needs, and a ``TODO`` wherever a fact about the organisation
@@ -19,6 +19,7 @@ Interactive by default, entirely non-interactive with ``--answers FILE``, and
 
 from __future__ import annotations
 
+import re
 import sys
 from dataclasses import dataclass, field
 from datetime import date as _date
@@ -35,7 +36,7 @@ from .catalog import (
     CLAUSES,
     POLICIES,
     QUESTIONS,
-    RISK_PATH,
+    RISKS_DIR,
     SCOPE_PATH,
     SUGGESTED_START,
     Framework,
@@ -51,13 +52,12 @@ DEFAULT_ORGANIZATION = "TODO"
 TODO = "TODO"
 
 ANSWERS_KEYS = frozenset(
-    {"organization", "what_it_does", "owner", "frameworks", "policies", "risk_title", "create", "profile"}
+    {"organization", "what_it_does", "owner", "frameworks", "policies", "create", "profile"}
 )
 
 # Items the scan knows about, as "labels" so the answers file can veto one.
 CREATE_SCOPE = "scope"
 CREATE_FRAMEWORKS = "frameworks"
-CREATE_RISK = "risk"
 CREATE_SOA = "soa"
 CREATE_POLICIES = "policies"
 
@@ -253,7 +253,7 @@ def _scan(target: Path, frameworks: Sequence[Framework]) -> list[tuple[str, str]
     deliberate: the report answers "what could this instance hold", so it should
     not change shape based on an answer not given yet.
     """
-    paths = [SCOPE_PATH, FRAMEWORKS_PATH, RISK_PATH]
+    paths = [SCOPE_PATH, FRAMEWORKS_PATH]
     paths += [policy.path for policy in POLICIES]
     paths += [framework.soa_path for framework in frameworks if framework.soa_path]
 
@@ -274,7 +274,6 @@ class _Plan:
     owner: str
     frameworks: tuple[Framework, ...]
     policies: tuple[Policy, ...]
-    risk_title: str
     create: dict[str, bool]
     profile: dict[str, bool] = field(default_factory=lambda: _resolve_profile(None))
 
@@ -284,9 +283,9 @@ def _plan_from_answers(answers: dict[str, Any], create_all: bool) -> _Plan:
     if created and not isinstance(created, dict):
         raise OnboardingError("create: expected a mapping of item -> boolean")
     vetoed = {key for key, value in created.items() if value is False}
-    unknown = sorted(set(created) - {CREATE_SCOPE, CREATE_FRAMEWORKS, CREATE_RISK, CREATE_SOA, CREATE_POLICIES})
+    unknown = sorted(set(created) - {CREATE_SCOPE, CREATE_FRAMEWORKS, CREATE_SOA, CREATE_POLICIES})
     if unknown:
-        known = ", ".join([CREATE_SCOPE, CREATE_FRAMEWORKS, CREATE_RISK, CREATE_SOA, CREATE_POLICIES])
+        known = ", ".join([CREATE_SCOPE, CREATE_FRAMEWORKS, CREATE_SOA, CREATE_POLICIES])
         raise OnboardingError(f"create: unknown item(s): {', '.join(unknown)} (known: {known})")
     return _Plan(
         organization=str(answers.get("organization") or DEFAULT_ORGANIZATION),
@@ -294,10 +293,9 @@ def _plan_from_answers(answers: dict[str, Any], create_all: bool) -> _Plan:
         owner=str(answers.get("owner") or DEFAULT_OWNER),
         frameworks=_resolve_frameworks(answers.get("frameworks")),
         policies=_resolve_policies(answers.get("policies")),
-        risk_title=str(answers.get("risk_title") or TODO),
         profile=_resolve_profile(answers.get("profile")),
         create={key: (create_all and key not in vetoed) for key in
-                (CREATE_SCOPE, CREATE_FRAMEWORKS, CREATE_RISK, CREATE_SOA, CREATE_POLICIES)},
+                (CREATE_SCOPE, CREATE_FRAMEWORKS, CREATE_SOA, CREATE_POLICIES)},
     )
 
 
@@ -348,8 +346,6 @@ def _plan_interactively(ask: Ask, pending: set[str], known: tuple[Framework, ...
         elif not answer.startswith("n"):
             policies = offered
 
-    create[CREATE_RISK] = RISK_PATH in pending
-    risk_title = TODO
 
     soa_pending = bool(framework_paths & pending)
     create[CREATE_SOA] = soa_pending and ask.yes(
@@ -363,7 +359,6 @@ def _plan_interactively(ask: Ask, pending: set[str], known: tuple[Framework, ...
         owner=owner,
         frameworks=frameworks,
         policies=tuple(policies),
-        risk_title=risk_title,
         create=create,
         profile=profile,
     )
@@ -428,24 +423,6 @@ def _contents(plan: _Plan, today: str) -> dict[str, str]:
                 review_cadence="annual",
                 **common,
             ),
-        )
-
-    if plan.create[CREATE_RISK]:
-        files[RISK_PATH] = _document(
-            {
-                "id": "RISK-001",
-                "title": plan.risk_title,
-                "owner": plan.owner,
-                "status": "open",
-                # Ratings and treatment are TODO: they are an assessment and a
-                # decision, and a default here would read as one.
-                "likelihood": TODO,
-                "impact": TODO,
-                "inherent": TODO,
-                "residual": TODO,
-                "treatment": TODO,
-            },
-            _render("risk.md", title=plan.risk_title, owner=plan.owner, date=today),
         )
 
     if plan.create[CREATE_SOA]:
@@ -585,7 +562,7 @@ def run(
 
 
 def _order(path: str) -> tuple[int, str]:
-    """Creation order: scope, frameworks, policies in sequence, risk, SoA last."""
+    """Creation order: scope, frameworks, policies in sequence, SoA last."""
     if path == SCOPE_PATH:
         return (0, path)
     if path == FRAMEWORKS_PATH:
@@ -593,8 +570,6 @@ def _order(path: str) -> tuple[int, str]:
     for policy in POLICIES:
         if path == policy.path:
             return (10 + policy.number, path)
-    if path == RISK_PATH:
-        return (30, path)
     return (40, path)
 
 
@@ -629,11 +604,9 @@ def run_framework(
         owner=DEFAULT_OWNER,
         frameworks=frameworks,
         policies=(),
-        risk_title=TODO,
         create={
             CREATE_SCOPE: False,
             CREATE_FRAMEWORKS: True,
-            CREATE_RISK: False,
             CREATE_SOA: True,
             CREATE_POLICIES: False,
         },
@@ -655,4 +628,53 @@ def run_framework(
         print("Already declared; nothing to write.")
     print()
     print("Next: run `make next`.")
+    return 0
+
+
+def _next_risk_number(risks_dir: Path) -> int:
+    numbers = [int(m.group(1)) for path in risks_dir.glob("RISK-*.md") if (m := re.match(r"RISK-(\d+)", path.name))]
+    return max(numbers, default=0) + 1
+
+
+def run_new_risk(
+    target: Path,
+    title: str | None = None,
+    *,
+    owner: str = DEFAULT_OWNER,
+    dry_run: bool = False,
+    ask: Ask | None = None,
+    today: str | None = None,
+) -> int:
+    """Write the next RISK-NNN skeleton. Never overwrites; ratings stay TODO."""
+    if target.exists() and not target.is_dir():
+        raise OnboardingError(f"target is not a directory: {target}")
+    if not title:
+        if ask is None and not sys.stdin.isatty():
+            raise OnboardingError("standard input is not a terminal; pass --title \"what could go wrong\"")
+        title = (ask or Ask()).text("What could go wrong, in one line", "").strip()
+    if not title:
+        raise OnboardingError("a risk needs a one-line scenario")
+
+    risks_dir = target / RISKS_DIR
+    risk_id = f"RISK-{_next_risk_number(risks_dir):03d}"
+    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:40].strip("-") or "risk"
+    path = f"{RISKS_DIR}/{risk_id}-{slug}.md"
+    contents = _document(
+        {
+            "id": risk_id,
+            "title": title,
+            "owner": owner,
+            "status": "open",
+            # An assessment and a decision, so no default that would read as one.
+            "likelihood": TODO,
+            "impact": TODO,
+            "inherent": TODO,
+            "residual": TODO,
+            "treatment": TODO,
+        },
+        _render("risk.md", title=title, owner=owner, date=today or _date.today().isoformat()),
+    )
+    _emit(target, path, contents, dry_run, Result())
+    print()
+    print(f"Next: fill in {path}, or `make new-risk` for another. Then `make next`.")
     return 0

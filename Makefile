@@ -32,8 +32,11 @@ install: ## Create .venv and install the one runtime dependency (PyYAML)
 framework: ## Choose or add a framework (a short menu); FRAMEWORK=... skips it
 	$(COMPLIATOR) framework $(if $(FRAMEWORK),--set $(FRAMEWORK))
 
-init: ## Scaffold scope, risks, the SoA and policies, one document at a time
+init: ## A few questions, then draft the scope, policies and statement of applicability
 	$(COMPLIATOR) init $(if $(FRAMEWORK),--framework $(FRAMEWORK))
+
+new-risk: ## Add the next risk (RISK-NNN); TITLE="..." skips the question
+	$(COMPLIATOR) new-risk $(if $(TITLE),--title "$(TITLE)")
 
 ##@ Check for gaps
 # Exit 1 (findings) is expected on a young instance; only exit 2 fails.
