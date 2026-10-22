@@ -358,11 +358,10 @@ def _plan_interactively(
     )
 
     has_risks = bool(list((target / RISKS_DIR).glob("RISK-*.md")))
-    print("\nStep: risks first, then policies. Your answers to these questions choose both.")
     print(
-        "Risks already recorded; answers only choose policies."
+        "\nYour answers decide which policies to draft."
         if has_risks
-        else "No risks recorded yet; after the questions I will propose starter risks."
+        else "\nYour answers decide which risks and policies to draft."
     )
     profile = _ask_profile(ask)
     if not has_risks:
@@ -533,7 +532,7 @@ def _print_next_steps(result: Result, remaining: Sequence[str], required_soa: se
     if left_out:
         shown = ", ".join(left_out[:3])
         more = f" and {len(left_out) - 3} more" if len(left_out) > 3 else ""
-        print(f"{len(left_out)} not created (not selected): {shown}{more}")
+        print(f"Skipped {len(left_out)} (not selected): {shown}{more}")
         print("  They are still offered next time - nothing was written for them.")
     if inapplicable:
         print("No statement of applicability: the declared framework(s) do not require one.")
@@ -563,8 +562,12 @@ def run(
     missing = [path for path, state in rows if state == "missing"]
 
     print(f"Scanning {target if str(target) else '.'}")
+    collapse = len(rows) > 6 and len(missing) < len(rows)
     for path, state in rows:
-        print(f"  {state:<8} {path}")
+        if state == "missing" or not collapse:
+            print(f"  {state:<8} {path}")
+    if collapse:
+        print(f"  present  {len(rows) - len(missing)} of {len(rows)} document(s)")
     print()
     if not missing:
         print("Already set up: every document this scan knows about is present.")
