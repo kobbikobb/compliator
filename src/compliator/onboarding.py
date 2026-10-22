@@ -533,7 +533,7 @@ def _print_next_steps(result: Result, remaining: Sequence[str], required_soa: se
         shown = ", ".join(left_out[:3])
         more = f" and {len(left_out) - 3} more" if len(left_out) > 3 else ""
         print(f"Skipped {len(left_out)} (not selected): {shown}{more}")
-        print("  Not needed for your answers. Run `make init` again if that changes.")
+        print("  Not needed for your answers. Run `make start` again if that changes.")
     if inapplicable:
         print("No statement of applicability: the declared framework(s) do not require one.")
 
@@ -766,16 +766,17 @@ def discover_risks(
     starters = [r for r in STARTER_RISKS if r.when is None or profile.get(r.when, False)]
     print()
     print("From those answers, here are starter risks. A risk is something that could go wrong.")
-    print("Read them, spot what is missing, and edit or add more: they are yours to adjust.")
+    print("They are drafts: you set the ratings and treatment afterwards.")
     for starter in starters:
         print(f"  - {starter.title}")
     paths = []
     if ask.yes("Draft these as risk records?", default=True):
         for starter in starters:
             paths.append(_write_risk(target, starter.title, owner, dry_run, today))
-    print("Anything else that could go wrong? One line each, blank to finish.")
-    while title := ask.text("  What could go wrong", "").strip():
-        paths.append(_write_risk(target, title, owner, dry_run, today))
+    if ask.yes("Add a risk of your own?", default=False):
+        print("One line each, blank to finish.")
+        while title := ask.text("  What could go wrong", "").strip():
+            paths.append(_write_risk(target, title, owner, dry_run, today))
     return paths
 
 

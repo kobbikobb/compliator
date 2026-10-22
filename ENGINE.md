@@ -33,7 +33,7 @@ make list      # configured controls and their checks
 make demo      # collect from the synthetic fixtures, then verify every record
 make status    # is what exists still true? (`make check` fails on findings)
 make framework # declare framework(s); FRAMEWORK=... skips the menu
-make init      # a few questions about your organisation, then draft the ISMS
+make start     # a few questions, then it drafts scope, risks, policies and SoA
 make test      # the test suite
 ```
 

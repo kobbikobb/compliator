@@ -1,4 +1,4 @@
-.PHONY: help next install install-dev framework init new-risk status check collect verify list demo test check-words clean-evidence lint format typecheck coverage security ci
+.PHONY: help next install install-dev framework start init new-risk status check collect verify list demo test check-words clean-evidence lint format typecheck coverage security ci
 
 # Prefer .venv/ (created by `make install`) over the system interpreter:
 # PEP 668 forbids pip installs into the system Python on macOS/Homebrew.
@@ -32,8 +32,10 @@ install: ## Create .venv and install the one runtime dependency (PyYAML)
 framework: ## Choose or add a framework (a short menu); FRAMEWORK=... skips it
 	$(COMPLIATOR) framework $(if $(FRAMEWORK),--set $(FRAMEWORK))
 
-init: ## A few questions, then draft the scope, policies and statement of applicability
+start: ## A few questions, then draft the scope, risks, policies and statement of applicability
 	$(COMPLIATOR) init $(if $(FRAMEWORK),--framework $(FRAMEWORK))
+
+init: start ## Same as start
 
 new-risk: ## Add the next risk (RISK-NNN); TITLE="..." skips the question
 	$(COMPLIATOR) new-risk $(if $(TITLE),--title "$(TITLE)")
