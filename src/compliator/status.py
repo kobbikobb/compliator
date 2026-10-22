@@ -104,9 +104,9 @@ def _first_todo(body: str) -> str:
         return ""
     paragraph = body[match.start() :].lstrip().split("\n\n", 1)[0]
     line = " ".join(paragraph.replace("|", " ").split())
-    if len(line) <= 90:
+    if len(line) <= 200:
         return line
-    return line[:90].rsplit(" ", 1)[0] + " ..."
+    return line[:200].rsplit(" ", 1)[0] + " ..."
 
 
 def _documents(instance: Path) -> list[Document]:
