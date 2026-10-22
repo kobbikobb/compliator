@@ -193,7 +193,7 @@ class TestOnboarding(unittest.TestCase):
 
     def test_new_risk_asks_for_the_scenario_and_refuses_an_empty_one(self):
         with redirect_stdout(io.StringIO()):
-            run_new_risk(self.target, ask=Ask(["n"] * 8 + ["y", "y", "Laptop lost", ""]))
+            run_new_risk(self.target, ask=Ask(["n"] * 8 + ["y", "y", "Laptop lost", "", "n"]))
             with self.assertRaises(OnboardingError):
                 run_new_risk(self.target, "  ")
 
@@ -202,9 +202,26 @@ class TestOnboarding(unittest.TestCase):
         self.assertTrue(risks[0].startswith("RISK-001-someone-gets-into"))
         self.assertEqual(risks[2], "RISK-003-laptop-lost.md")
 
+    def test_new_risk_wizard_records_the_ratings_the_user_gives(self):
+        with redirect_stdout(io.StringIO()):
+            run_new_risk(
+                self.target,
+                ask=Ask(
+                    ["n"] * 8 + ["y", "y", "Laptop lost", "", "y"] + ["high", "low", "mitigate"] * 3
+                ),
+            )
+
+        docs = [read_document(p)[0] for p in sorted((self.target / "isms/risks").glob("RISK-*.md"))]
+        self.assertEqual(len(docs), 3)
+        for doc in docs:
+            self.assertEqual(
+                (doc["likelihood"], doc["impact"], doc["treatment"]), ("high", "low", "mitigate")
+            )
+            self.assertTrue(str(doc["inherent"]).startswith("TODO"))
+
     def test_init_derives_starter_risks_from_the_facts_before_drafting_policies(self):
         script = ["n", "soc2", "y"] + ["n"] * 5 + ["y", "n", "n"]  # staff only
-        script += ["y", "n", "n"]
+        script += ["y", "n", "n", "n"]
         _, out = self._run(ask=Ask(script))
 
         self.assertLess(
