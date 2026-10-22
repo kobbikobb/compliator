@@ -15,7 +15,7 @@ make install   # create .venv and install PyYAML into it
 make           # name the one thing to do now (same as `make next`)
 
 make framework # declare ISO/IEC 27001, SOC 2, or both
-make init      # a few questions about your organisation, then draft the ISMS
+make start     # a few questions, then it drafts scope, risks, policies and SoA
 make status    # every gap; `make check` fails on any
 make demo      # collect + verify against the synthetic fixtures
 ```
