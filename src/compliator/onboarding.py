@@ -363,7 +363,7 @@ def _plan_interactively(
         if has_risks
         else "\nYour answers decide which risks and policies to draft."
     )
-    profile = _ask_profile(ask)
+    profile = _ask_profile(ask, None if not has_risks else _relevant_questions(pending))
     if not has_risks:
         discover_risks(target, ask, profile, owner=owner, today=today)
 
@@ -533,7 +533,7 @@ def _print_next_steps(result: Result, remaining: Sequence[str], required_soa: se
         shown = ", ".join(left_out[:3])
         more = f" and {len(left_out) - 3} more" if len(left_out) > 3 else ""
         print(f"Skipped {len(left_out)} (not selected): {shown}{more}")
-        print("  They are still offered next time - nothing was written for them.")
+        print("  Not needed for your answers. Run `make init` again if that changes.")
     if inapplicable:
         print("No statement of applicability: the declared framework(s) do not require one.")
 
@@ -612,7 +612,7 @@ def run(
         if wanted:
             print("Nothing to write: everything selected is already present.")
         else:
-            print("Nothing selected, so nothing was written.")
+            print("Nothing to draft: your answers do not call for the missing document(s).")
         _print_next_steps(result, remaining, required_soa)
         return 0
 
@@ -733,9 +733,23 @@ def _write_risk(target: Path, title: str, owner: str, dry_run: bool, today: str 
     return path
 
 
-def _ask_profile(ask: Ask) -> dict[str, bool]:
+def _relevant_questions(pending: set[str]) -> set[str]:
+    """Questions whose answer could change a document that is still missing."""
+    numbers = {policy.number for policy in POLICIES if policy.path in pending}
+    keys = {q.key for q in QUESTIONS if numbers & set(q.adds)}
+    keys.update(c.when for c in CLAUSES if c.policy in numbers and c.when)
+    return keys
+
+
+def _ask_profile(ask: Ask, only: set[str] | None = None) -> dict[str, bool]:
+    """Ask each question (or just `only`); the rest keep their defaults."""
     return {
-        question.key: ask.yes(question.prompt, default=question.default) for question in QUESTIONS
+        question.key: (
+            ask.yes(question.prompt, default=question.default)
+            if only is None or question.key in only
+            else question.default
+        )
+        for question in QUESTIONS
     }
 
 
