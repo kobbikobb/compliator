@@ -75,8 +75,24 @@ class TestOnboarding(unittest.TestCase):
         code, out = self._run(answers_path=answers)
 
         self.assertEqual(code, 0)
-        self.assertIn("Nothing selected", out)
+        self.assertIn("Nothing to draft", out)
         self.assertFalse((self.target / "isms").exists())
+
+    def test_only_questions_that_matter_for_missing_documents_are_asked(self):
+        answers = write_answers(self.tmp, frameworks="soc2", policies="all")
+        self._run(answers_path=answers)
+        (self.target / "isms/policies/POL-012-physical-security.md").unlink()
+        risks = self.target / "isms/risks"
+        risks.mkdir()
+        (risks / "RISK-001-x.md").write_text("---\nid: RISK-001\n---\n", encoding="utf-8")
+        script = ["n"]
+
+        code, out = self._run(ask=Ask(script))
+
+        self.assertEqual(code, 0)
+        self.assertEqual(out.count("[Y/n]") + out.count("[y/N]"), 1)
+        self.assertIn("physical site", out)
+        self.assertIn("Nothing to draft", out)
 
     # -- what a full run writes ----------------------------------------------
 
