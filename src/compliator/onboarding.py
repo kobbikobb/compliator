@@ -328,6 +328,14 @@ def _plan_from_answers(answers: dict[str, Any], create_all: bool) -> _Plan:
     )
 
 
+LEVELS = ("low", "medium", "high")
+TREATMENTS = ("mitigate", "accept", "transfer", "avoid")
+
+
+def _step(number: int, title: str) -> None:
+    print(f"\nStep {number} of 5 - {title}")
+
+
 def _plan_interactively(
     ask: Ask,
     pending: set[str],
@@ -342,6 +350,7 @@ def _plan_interactively(
     what_it_does = TODO
     owner = DEFAULT_OWNER
 
+    _step(1, "Scope")
     create[CREATE_SCOPE] = SCOPE_PATH in pending and ask.yes(
         f"Create {SCOPE_PATH} (the scope statement)?", default=True
     )
@@ -350,6 +359,7 @@ def _plan_interactively(
         what_it_does = ask.text("  What the business does, in one line", TODO)
         owner = ask.text("  Owner (a role or an address)", DEFAULT_OWNER)
 
+    _step(2, "Framework")
     frameworks = known if known is not None else _ask_framework(ask)
     framework_paths = {framework.soa_path for framework in frameworks if framework.soa_path}
 
@@ -358,15 +368,17 @@ def _plan_interactively(
     )
 
     has_risks = bool(list((target / RISKS_DIR).glob("RISK-*.md")))
+    _step(3, "Risks" if not has_risks else "A few facts")
     print(
-        "\nYour answers decide which policies to draft."
+        "Your answers decide which policies to draft."
         if has_risks
-        else "\nYour answers decide which risks and policies to draft."
+        else "Your answers decide which risks and policies to draft."
     )
     profile = _ask_profile(ask, None if not has_risks else _relevant_questions(pending))
     if not has_risks:
         discover_risks(target, ask, profile, owner=owner, today=today)
 
+    _step(4, "Policies")
     wanted = set(SUGGESTED_START)
     for question in QUESTIONS:
         if profile[question.key]:
@@ -400,6 +412,7 @@ def _plan_interactively(
         elif not answer.startswith("n"):
             policies = offered
 
+    _step(5, "Statement of applicability")
     soa_pending = bool(framework_paths & pending)
     create[CREATE_SOA] = soa_pending and ask.yes(
         f"Create the statement of applicability ({', '.join(sorted(p for p in framework_paths if p))})?",
@@ -533,7 +546,7 @@ def _print_next_steps(result: Result, remaining: Sequence[str], required_soa: se
         shown = ", ".join(left_out[:3])
         more = f" and {len(left_out) - 3} more" if len(left_out) > 3 else ""
         print(f"Skipped {len(left_out)} (not selected): {shown}{more}")
-        print("  Not needed for your answers. Run `make init` again if that changes.")
+        print("  Not needed for your answers. Run `make start` again if that changes.")
     if inapplicable:
         print("No statement of applicability: the declared framework(s) do not require one.")
 
@@ -709,7 +722,14 @@ def _next_risk_number(risks_dir: Path) -> int:
     return max(numbers, default=0) + 1
 
 
-def _write_risk(target: Path, title: str, owner: str, dry_run: bool, today: str | None) -> str:
+def _write_risk(
+    target: Path,
+    title: str,
+    owner: str,
+    dry_run: bool,
+    today: str | None,
+    ratings: dict[str, str] | None = None,
+) -> str:
     risks_dir = target / RISKS_DIR
     risk_id = f"RISK-{_next_risk_number(risks_dir):03d}"
     slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:40].strip("-") or "risk"
@@ -726,6 +746,7 @@ def _write_risk(target: Path, title: str, owner: str, dry_run: bool, today: str 
             "inherent": TODO,
             "residual": TODO,
             "treatment": TODO,
+            **(ratings or {}),
         },
         _render("risk.md", title=title, owner=owner, date=today or _date.today().isoformat()),
     )
@@ -766,17 +787,43 @@ def discover_risks(
     starters = [r for r in STARTER_RISKS if r.when is None or profile.get(r.when, False)]
     print()
     print("From those answers, here are starter risks. A risk is something that could go wrong.")
-    print("Read them, spot what is missing, and edit or add more: they are yours to adjust.")
+    print("They are drafts: you set the ratings and treatment afterwards.")
     for starter in starters:
         print(f"  - {starter.title}")
+    titles = (
+        [starter.title for starter in starters]
+        if ask.yes("Draft these as risk records?", default=True)
+        else []
+    )
+    if ask.yes("Add a risk of your own?", default=False):
+        print("One line each, blank to finish.")
+        while title := ask.text("  What could go wrong", "").strip():
+            titles.append(title)
+    rate = bool(titles) and ask.yes(
+        "Rate them now (likelihood, impact, treatment)? Your judgement, not a default.",
+        default=True,
+    )
     paths = []
-    if ask.yes("Draft these as risk records?", default=True):
-        for starter in starters:
-            paths.append(_write_risk(target, starter.title, owner, dry_run, today))
-    print("Anything else that could go wrong? One line each, blank to finish.")
-    while title := ask.text("  What could go wrong", "").strip():
-        paths.append(_write_risk(target, title, owner, dry_run, today))
+    for title in titles:
+        ratings = _ask_ratings(ask, title) if rate else None
+        paths.append(_write_risk(target, title, owner, dry_run, today, ratings))
     return paths
+
+
+def _ask_ratings(ask: Ask, title: str) -> dict[str, str]:
+    """Likelihood, impact and treatment from the person answering; blank leaves a TODO."""
+    print(f"\n  {title}")
+    ratings: dict[str, str] = {}
+    for key, prompt, choices in (
+        ("likelihood", "How likely, in the next year?", LEVELS),
+        ("impact", "How bad if it happens?", LEVELS),
+        ("treatment", "What will you do about it?", TREATMENTS),
+    ):
+        answer = ask.text(f"    {prompt} ({'/'.join(choices)}, blank = decide later)", "")
+        answer = answer.strip().lower()
+        if answer in choices:
+            ratings[key] = answer
+    return ratings
 
 
 def run_new_risk(

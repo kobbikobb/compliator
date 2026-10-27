@@ -52,7 +52,7 @@ def _scope(inst: _Snapshot) -> Step | None:
     return Step(
         "No scope statement.",
         "Nothing says what the ISMS covers, so nothing can be judged complete.",
-        "make init",
+        "make start",
     )
 
 
@@ -89,7 +89,7 @@ def _foundation_policies(inst: _Snapshot) -> Step | None:
         + ", ".join(f"POL-{number:03d}" for number in missing)
         + ".",
         "They set the commitment and the method the risk assessment follows.",
-        "make init   (a few questions about your organisation, then it drafts them)",
+        "make start   (a few questions about your organisation, then it drafts them)",
     )
 
 
@@ -109,7 +109,7 @@ def _policies(inst: _Snapshot) -> Step | None:
         )
         what += " and more." if len(wanted) > 4 else "."
     return Step(
-        what, "Policies are the rules the applicable requirements are met with.", "make init"
+        what, "Policies are the rules the applicable requirements are met with.", "make start"
     )
 
 
